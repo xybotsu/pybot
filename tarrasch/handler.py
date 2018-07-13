@@ -196,7 +196,7 @@ def _handle_leaderboard(client, channel, user_name, rest):
     client.rtm_send_message(channel, '```\n{}```'.format(table_string))
 
 def _handle_help(client, channel, user_name, rest):
-    help_string = "I am Tarrasch, the chess bot. My code is on GitHub at thieman/tarrasch.\n\n"
+    help_string = "I am Xybotsu, the chess bot. My code is on GitHub at xybotsu/chessbot.\n\n"
     for command in sorted(COMMANDS.keys()):
         if command == 'help':
             continue
