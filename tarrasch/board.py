@@ -16,22 +16,27 @@ class TarraschBoard(Board):
     from its persistence layer, render itself using jinchess diagrams,
     all sorts of fun stuff."""
 
-    def __init__(self, channel, white_user, black_user, *args, **kwargs):
+    def __init__(self, channel, thread, white_user, black_user, *args, **kwargs):
         super(TarraschBoard, self).__init__(*args, **kwargs)
         self.channel = channel
+        self.thread = thread
         self.white_user = white_user
         self.black_user = black_user
         self.last_move_time = 0
 
+    @staticmethod
+    def getDbKey(channel, thread): 
+        return channel + '-' + thread
+
     @classmethod
-    def from_backend(cls, channel):
-        """Return the saved TarraschBoard for the given channel, or
+    def from_backend(cls, channel, thread):
+        """Return the saved TarraschBoard for the given channel + thread, or
         raise a TarraschNoBoardException if there is none."""
-        record = db.get(channel)
+        record = db.get(TarraschBoard.getDbKey(channel, thread))
         if not record:
-            raise TarraschNoBoardException('No board found for channel {}'.format(channel))
+            raise TarraschNoBoardException('No board found for channel {}, thread {}'.format(channel, thread))
         payload = pickle.loads(record)
-        board = cls(channel, payload['white_user'], payload['black_user'])
+        board = cls(channel, thread, payload['white_user'], payload['black_user'])
         board.last_move_time = payload['last_move_time'] or 0
         # Restore board positions from FEN
         board.set_fen(payload['fen'])
@@ -49,10 +54,13 @@ class TarraschBoard(Board):
             'move_stack': self.move_stack,
             'stack': self.stack
         }
-        db.set(self.channel, pickle.dumps(payload))
+        db.set(self._getDbKey(), pickle.dumps(payload))
+
+    def _getDbKey(self):
+        return TarraschBoard.getDbKey(self.channel, self.thread)
 
     def kill(self):
-        db.delete(self.channel)
+        db.delete(self._getDbKey())
 
     def get_url(self, shorten=False):
         render_string = ''
