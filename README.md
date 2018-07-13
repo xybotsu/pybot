@@ -1,8 +1,18 @@
 ### Xybotsu Slack Chessbot
 
-<img src=http://i.imgur.com/Z3KZf4K.png width=400></img>
+### Installation
 
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+1. Make sure you have python 3.6.6rc1 running locally
+
+2. Set the following environment variables:
+```
+export TARRASCH_SLACK_TOKEN="... token ..."
+export REDIS_URL="... redis url ..."
+```
+
+3. Run `pip install -r requirements.txt`
+
+<img src=http://i.imgur.com/Z3KZf4K.png width=400></img>
 
 A Chess bot for Slack. Uses a fully-functional chess engine, graphical boards (none of that low-budget ASCII stuff), keeps track of your record against your friends and coworkers, and automatically uploads each game to lichess.org for analysis.
 
