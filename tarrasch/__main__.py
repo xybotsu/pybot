@@ -5,20 +5,20 @@ from .Xybotsu import Xybotsu, threadedMessageEvents, slack
 
 if __name__ == '__main__':
   try:
-    manager = ChessManager()
+    chess = ChessManager()
     x = Xybotsu(slack)
 
     # routes
-    x.register('chess ai', manager.onAi, threadedMessageEvents)
-    x.register('chess start', manager.onStart, threadedMessageEvents)
-    x.register('chess claim', manager.onClaim, threadedMessageEvents)
-    x.register('chess board', manager.onBoard, threadedMessageEvents)
-    x.register('chess move', manager.onMove, threadedMessageEvents)
-    x.register('chess takeback', manager.onTakeback, threadedMessageEvents)
-    x.register('chess forfeit', manager.onForfeit, threadedMessageEvents)
-    x.register('chess record', manager.onRecord, threadedMessageEvents)
-    x.register('chess leaderboard', manager.onLeaderboard, threadedMessageEvents)
-    x.register('chess help', manager.onHelp, threadedMessageEvents)
+    x.register('chess ai', chess.onAi, threadedMessageEvents)
+    x.register('chess start', chess.onStart, threadedMessageEvents)
+    x.register('chess claim', chess.onClaim, threadedMessageEvents)
+    x.register('chess board', chess.onBoard, threadedMessageEvents)
+    x.register('chess move', chess.onMove, threadedMessageEvents)
+    x.register('chess takeback', chess.onTakeback, threadedMessageEvents)
+    x.register('chess forfeit', chess.onForfeit, threadedMessageEvents)
+    x.register('chess record', chess.onRecord, threadedMessageEvents)
+    x.register('chess leaderboard', chess.onLeaderboard, threadedMessageEvents)
+    x.register('chess help', chess.onHelp, threadedMessageEvents)
 
     # start listening
     x.listen()
