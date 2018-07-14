@@ -13,13 +13,13 @@ def _getUser(user_id):
   return USER_CACHE[user_id]
 
 def _isMessageLike(event):
-    return event.type == 'message' and event.subtype is None and event.text is not None
+  return event.type == 'message' and event.subtype is None and event.text is not None
 
 def threadedMessageEvents(event):
-    return _isMessageLike(event) and event.thread is not None
+  return _isMessageLike(event) and event.thread is not None
 
 def messageEvents(event):
-    return _isMessageLike(event) and event.thread is None
+  return _isMessageLike(event) and event.thread is None
 
 def allEvents(e): return e
 
