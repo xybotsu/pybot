@@ -1,7 +1,7 @@
 import os
 
 SLACK_TOKEN = os.getenv('TARRASCH_SLACK_TOKEN')
-MESSAGE_PREFIX = os.getenv('TARRASCH_MESSAGE_PREFIX', 'mess')
+MESSAGE_PREFIX = os.getenv('TARRASCH_MESSAGE_PREFIX', 'chess')
 
 REDIS_URL = os.getenv('TARRASCH_REDIS_URL')
 # we'll also make it easier to use with Heroku out of the box

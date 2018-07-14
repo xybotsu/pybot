@@ -16,10 +16,10 @@ def _isMessageLike(event):
     return event.type == 'message' and event.subtype is None and event.text is not None
 
 def threadedMessageEvents(event):
-    return _isMessageLike(event) and event.thread_ts is not None
+    return _isMessageLike(event) and event.thread is not None
 
 def messageEvents(event):
-    return _isMessageLike(event) and event.thread_ts is None
+    return _isMessageLike(event) and event.thread is None
 
 def allEvents(e): return e
 
@@ -101,7 +101,7 @@ class ChessLeaderboard(Command):
   name = 'chess board'
 
 class Event(object):
-  def __init__(self, type, subtype, channel, user_id, text, ts, thread_ts):
+  def __init__(self, type, subtype, channel, user_id, text, ts, thread):
     self.type = type
     self.subtype = subtype
     self.channel = channel
@@ -109,7 +109,7 @@ class Event(object):
     self.user_name = _getUser(user_id)['name']
     self.text = text
     self.ts = ts
-    self.thread_ts = thread_ts
+    self.thread = thread
 
 def messageEventToCommand(event):
   commands = {
