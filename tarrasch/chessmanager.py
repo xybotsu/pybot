@@ -78,8 +78,7 @@ class ChessManager:
   # triggered by 'chess board'
   def onBoard(self, slack, args, event):
     """Show the current board state for the game in this channel."""
-    channel, thread = event.channel, event.thread
-    self._render(slack, channel, thread)
+    self._render(slack, event)
 
   # triggered by 'chess move'
   def onMove(self, slack, args, event):
@@ -171,7 +170,7 @@ class ChessManager:
     slack.rtm_send_message(event.channel, help_string, event.thread)
 
   def _handle_game_over(self, slack, event, board, result=None):
-    channel, message, thread = event.channel, event.message, event.thread
+    channel, thread = event.channel, event.thread
     if not result:
       if board.result() == '1-0':
         result = 'win'

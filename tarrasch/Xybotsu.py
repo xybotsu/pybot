@@ -95,10 +95,10 @@ class ChessTakeback(Command):
   name = 'chess takeback'
 
 class ChessRecord(Command):
-  name = 'chess board'
+  name = 'chess record'
 
 class ChessLeaderboard(Command):
-  name = 'chess board'
+  name = 'chess leaderboard'
 
 class Event(object):
   def __init__(self, type, subtype, channel, user_id, text, ts, thread):
