@@ -2,6 +2,7 @@ from slackclient import SlackClient
 from .config import SLACK_TOKEN
 from typing import Dict
 import time
+from dataclasses import dataclass
 
 _USER_CACHE: Dict[str, object] = {}
 
@@ -127,16 +128,18 @@ class ChessLeaderboard(Command):
     name = 'chess leaderboard'
 
 
-class Event(object):
-    def __init__(self, type, subtype, channel, user_id, text, ts, thread):
-        self.type = type
-        self.subtype = subtype
-        self.channel = channel
-        self.user_id = user_id
-        self.user_name = _getUser(user_id)['name']
-        self.text = text
-        self.ts = ts
-        self.thread = thread
+@dataclass
+class Event:
+    type: str
+    subtype: str
+    channel: str
+    user_id: str
+    text: str
+    ts: str
+    thread: str
+
+    def user_name(self) -> str:
+        return _getUser(self.user_id)['name']
 
 
 def _messageEventToCommand(event):
