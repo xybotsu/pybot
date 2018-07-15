@@ -1,7 +1,8 @@
 import logging
 
 from .chessmanager import ChessManager
-from .Xybotsu import Xybotsu, threadedMessageEvents, slack
+from .Xybotsu import Xybotsu, threadedMessageEvents, messageEvents, slack
+from crypto.CoinMarketCap import getListings, onCryptoListings
 
 if __name__ == '__main__':
     try:
@@ -20,6 +21,8 @@ if __name__ == '__main__':
         x.register('chess leaderboard', chess.onLeaderboard,
                    threadedMessageEvents)
         x.register('chess help', chess.onHelp, threadedMessageEvents)
+
+        x.register('crypto list', onCryptoListings, messageEvents)
 
         # start listening
         x.listen()

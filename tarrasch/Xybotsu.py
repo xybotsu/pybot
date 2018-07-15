@@ -88,6 +88,10 @@ class Command(object):
         print("{args} {event}".format(args=self.args, event=self.event))
 
 
+class CryptoList(Command):
+    name = 'crypto list'
+
+
 class ChessAi(Command):
     name = 'chess ai'
 
@@ -154,6 +158,7 @@ def _messageEventToCommand(event):
         'chess record': ChessRecord,
         'chess leaderboard': ChessLeaderboard,
         'chess help': ChessHelp,
+        'crypto list': CryptoList,
     }
 
     for command in commands.keys():
