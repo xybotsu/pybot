@@ -151,7 +151,7 @@ class ChessManager:
         continue
       record = json.loads(str(record))
       wins, losses, draws = 0, 0, 0
-      for opponent, results in record.iteritems():
+      for _, results in record.iteritems():
         wins += results['win']
         losses += results['loss']
         draws += results['draw']
@@ -188,7 +188,7 @@ class ChessManager:
       url = upload_analysis(board.get_pgn())
       message = 'This game is available for analysis at {}'.format(url)
     except Exception as e:
-      message = 'There was a problem uploading the game for analysis, sorry :anguished:'
+      message = 'There was a problem uploading the game for analysis, sorry :anguished:' + e.args
     slack.rtm_send_message(channel, message, thread)
 
     board.kill()
