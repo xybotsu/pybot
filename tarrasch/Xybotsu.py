@@ -40,9 +40,9 @@ def allEvents(e):
 
 
 class _MaybeCallback(object):
-    def __init__(self, callback, predicate):
+    def __init__(self, callback, condition):
         self.callback = callback
-        self.predicate = predicate
+        self.condition = condition
 
 
 class Xybotsu(object):
@@ -51,7 +51,7 @@ class Xybotsu(object):
         self.slack = slack
         if (not self.slack.rtm_connect()):
             raise IOError('Connection to Slack failed, check your token')
-        self.callbacks = {}
+        self._triggers = {}
 
     # listens for commands, and process them in turn
     def listen(self):
@@ -59,77 +59,53 @@ class Xybotsu(object):
             events = filter(lambda e: e.get('type') ==
                             'message' and 'text' in e, self.slack.rtm_read())
             for event in events:
-                command = _messageEventToCommand(event)
+                command = self._messageEventToCommand(event)
                 if command:
                     self.notify(command)  # notifies all listeners
             time.sleep(0.5)
 
-    # store a dict from command -> maybeCallback
-    def register(self, command, callback, condition):
-        maybeCallback = _MaybeCallback(callback, condition)
-        if self.callbacks.get(command):
-            self.callbacks[command].append(maybeCallback)
-        else:
-            self.callbacks[command] = [maybeCallback]
+    def _messageEventToCommand(self, event):
+        for trigger in self._triggers.keys():
+            if event['text'].startswith(trigger):
+                args = event['text'][len(trigger):].strip().split()
+                return Command(
+                    trigger,
+                    args,
+                    Event(
+                        event.get('type'),
+                        event.get('subtype'),
+                        event.get('channel'),
+                        event.get('user'),
+                        event.get('text'),
+                        event.get('ts'),
+                        event.get('thread_ts')
+                    )
+                )
 
-    # notifies all subscribers when command triggers
+        return None
+
+    # registers a trigger, which fires a callback if condition is true
+    def register(self, trigger, callback, condition):
+        maybeCallback = _MaybeCallback(callback, condition)
+        self._triggers.setdefault(trigger, [maybeCallback])
+
+    # notifies all subscribers when command triggers, if condition is true
     def notify(self, command):
-        for mc in (self.callbacks.get(command.name) or []):
-            if mc.predicate(command.event):
+        for mc in (self._triggers.get(command.trigger, [])):
+            if mc.condition(command.event):
                 mc.callback(self.slack, command.args, command.event)
 
 
-class Command(object):
-    def __init__(self, args, event):
-        self.args = args
-        self.event = event
+@dataclass
+class Command:
+    trigger: str
+    args: object
+    event: object
 
     def log(self):
-        print("{args} {event}".format(args=self.args, event=self.event))
-
-
-class CryptoList(Command):
-    name = 'crypto list'
-
-
-class ChessAi(Command):
-    name = 'chess ai'
-
-
-class ChessStart(Command):
-    name = 'chess start'
-
-
-class ChessClaim(Command):
-    name = 'chess claim'
-
-
-class ChessForfeit(Command):
-    name = 'chess forfeit'
-
-
-class ChessMove(Command):
-    name = 'chess move'
-
-
-class ChessHelp(Command):
-    name = 'chess help'
-
-
-class ChessBoard(Command):
-    name = 'chess board'
-
-
-class ChessTakeback(Command):
-    name = 'chess takeback'
-
-
-class ChessRecord(Command):
-    name = 'chess record'
-
-
-class ChessLeaderboard(Command):
-    name = 'chess leaderboard'
+        print("{trigger} {args} {event}".format(
+            trigger=self.trigger, args=self.args, event=self.event)
+        )
 
 
 @dataclass
@@ -144,37 +120,3 @@ class Event:
 
     def user_name(self) -> str:
         return _getUser(self.user_id)['name']
-
-
-def _messageEventToCommand(event):
-    commands = {
-        'chess ai': ChessAi,
-        'chess start': ChessStart,
-        'chess claim': ChessClaim,
-        'chess board': ChessBoard,
-        'chess move': ChessMove,
-        'chess takeback': ChessTakeback,
-        'chess forfeit': ChessForfeit,
-        'chess record': ChessRecord,
-        'chess leaderboard': ChessLeaderboard,
-        'chess help': ChessHelp,
-        'crypto list': CryptoList,
-    }
-
-    for command in commands.keys():
-        if event['text'].startswith(command):
-            args = event['text'][len(command):].strip().split()
-            return commands[command](
-                args,
-                Event(
-                    event.get('type'),
-                    event.get('subtype'),
-                    event.get('channel'),
-                    event.get('user'),
-                    event.get('text'),
-                    event.get('ts'),
-                    event.get('thread_ts')
-                )
-            )
-
-    return None
