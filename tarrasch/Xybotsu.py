@@ -3,7 +3,7 @@ from .config import SLACK_TOKEN
 from typing import Dict
 import time
 
-USER_CACHE: Dict[str, str] = {}
+_USER_CACHE: Dict[str, object] = {}
 
 slack = SlackClient(SLACK_TOKEN)
 
@@ -12,10 +12,10 @@ slack = SlackClient(SLACK_TOKEN)
 
 
 def _getUser(user_id):
-    if not USER_CACHE.get(user_id):
-        USER_CACHE[user_id] = slack.api_call(
+    if not _USER_CACHE.get(user_id):
+        _USER_CACHE[user_id] = slack.api_call(
             'users.info', user=user_id)['user']
-    return USER_CACHE[user_id]
+    return _USER_CACHE[user_id]
 
 
 def _isMessageLike(event):
@@ -38,7 +38,7 @@ def allEvents(e):
     return e
 
 
-class MaybeCallback(object):
+class _MaybeCallback(object):
     def __init__(self, callback, predicate):
         self.callback = callback
         self.predicate = predicate
@@ -58,14 +58,14 @@ class Xybotsu(object):
             events = filter(lambda e: e.get('type') ==
                             'message' and 'text' in e, self.slack.rtm_read())
             for event in events:
-                command = messageEventToCommand(event)
+                command = _messageEventToCommand(event)
                 if command:
                     self.notify(command)  # notifies all listeners
             time.sleep(0.5)
 
     # store a dict from command -> maybeCallback
     def register(self, command, callback, condition):
-        maybeCallback = MaybeCallback(callback, condition)
+        maybeCallback = _MaybeCallback(callback, condition)
         if self.callbacks.get(command):
             self.callbacks[command].append(maybeCallback)
         else:
@@ -76,14 +76,6 @@ class Xybotsu(object):
         for mc in (self.callbacks.get(command.name) or []):
             if mc.predicate(command.event):
                 mc.callback(self.slack, command.args, command.event)
-
-
-def isMessage(event):
-    return (
-        event.get('type') == 'message' and
-        'subtype' not in event and
-        'text' in event
-    )
 
 
 class Command(object):
@@ -147,7 +139,7 @@ class Event(object):
         self.thread = thread
 
 
-def messageEventToCommand(event):
+def _messageEventToCommand(event):
     commands = {
         'chess ai': ChessAi,
         'chess start': ChessStart,

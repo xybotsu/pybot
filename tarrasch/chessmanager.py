@@ -322,11 +322,11 @@ class ChessManager:
 def _humanize(seconds):
     if seconds < 120:
         return '{} seconds'.format(int(round(seconds)))
-    elif seconds < 60*60*2:
-        return '{} minutes'.format(int(round(seconds/60)))
-    elif seconds < 60*60*24:
-        return '{} hours'.format(int(round(seconds/(60*60))))
-    return '{} days'.format(int(round(seconds/(60*60*24))))
+    elif seconds < 60 * 60 * 2:
+        return '{} minutes'.format(int(round(seconds / 60)))
+    elif seconds < 60 * 60 * 24:
+        return '{} hours'.format(int(round(seconds / (60 * 60))))
+    return '{} days'.format(int(round(seconds / (60 * 60 * 24))))
 
 
 def _update_records(white_user, black_user, result):
