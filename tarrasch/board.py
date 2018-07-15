@@ -7,8 +7,10 @@ from chess import Board, SQUARES_180, pgn
 from .database import singleton as db
 from .shortener import shorten_url
 
+
 class TarraschNoBoardException(Exception):
     pass
+
 
 class TarraschBoard(Board):
     """An augmented Board from python-chess which also knows
@@ -16,7 +18,8 @@ class TarraschBoard(Board):
     from its persistence layer, render itself using jinchess diagrams,
     all sorts of fun stuff."""
 
-    def __init__(self, channel, thread, white_user, black_user, *args, **kwargs):
+    def __init__(self, channel, thread, white_user, black_user, *args,
+                 **kwargs):
         super(TarraschBoard, self).__init__(*args, **kwargs)
         self.channel = channel
         self.thread = thread
@@ -25,7 +28,7 @@ class TarraschBoard(Board):
         self.last_move_time = 0
 
     @staticmethod
-    def getDbKey(channel, thread): 
+    def getDbKey(channel, thread):
         return channel + '-' + thread
 
     @classmethod
@@ -34,9 +37,12 @@ class TarraschBoard(Board):
         raise a TarraschNoBoardException if there is none."""
         record = db.get(TarraschBoard.getDbKey(channel, thread))
         if not record:
-            raise TarraschNoBoardException('No board found for channel {}, thread {}'.format(channel, thread))
+            raise TarraschNoBoardException(
+                'No board found for channel {}, thread {}'
+                .format(channel, thread))
         payload = pickle.loads(record)
-        board = cls(channel, thread, payload['white_user'], payload['black_user'])
+        board = cls(channel, thread,
+                    payload['white_user'], payload['black_user'])
         board.last_move_time = payload['last_move_time'] or 0
         # Restore board positions from FEN
         board.set_fen(payload['fen'])
@@ -71,7 +77,9 @@ class TarraschBoard(Board):
             else:
                 render_string += '-'
         # We add some noise at the end to force Slack to render our shit
-        url = 'http://www.jinchess.com/chessboard/?s=s&cm=r&ps=alpha-flat&p={}#{}'.format(render_string, random.randint(0, 10000000))
+        url = 'http://www.jinchess.com/chessboard/' \
+            + '?s=s&cm=r&ps=alpha-flat&p={}#{}'.format(
+                render_string, random.randint(0, 10000000))
         if shorten:
             url = shorten_url(url)
         return url
