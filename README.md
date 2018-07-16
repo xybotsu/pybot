@@ -1,4 +1,4 @@
-### Xybotsu Slack Chessbot
+### Slack Chessbot
 
 ![](https://i.imgur.com/GdGnKBh.png)
 
