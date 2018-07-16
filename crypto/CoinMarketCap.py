@@ -47,6 +47,7 @@ def mono(str):
     return "```{str}```".format(str=str)
 
 
-def onCryptoListings(slack, args, event):
+def onCryptoListings(slack, cmd):
+    channel, thread = cmd.channel, cmd.thread
     str = ", ".join(list(map(lambda d: d.symbol, getListings().data)))
-    slack.rtm_send_message(event.channel, mono(str), event.thread)
+    slack.rtm_send_message(channel, mono(str), thread)

@@ -1,6 +1,6 @@
 from slackclient import SlackClient
 from .config import SLACK_TOKEN
-from typing import Dict
+from typing import Dict, List
 import time
 from dataclasses import dataclass
 
@@ -93,14 +93,26 @@ class Xybotsu(object):
     def notify(self, command):
         for mc in (self._triggers.get(command.trigger, [])):
             if mc.condition(command.event):
-                mc.callback(self.slack, command.args, command.event)
+                mc.callback(self.slack, command)
 
 
 @dataclass
 class Command:
     trigger: str
-    args: object
+    args: List[str]
     event: object
+
+    @property
+    def user_name(self) -> str:
+        return _getUser(self.event.user_id)['name']
+
+    @property
+    def channel(self) -> str:
+        return self.event.channel
+
+    @property
+    def thread(self) -> str:
+        return self.event.thread
 
     def log(self):
         print("{trigger} {args} {event}".format(
@@ -117,6 +129,3 @@ class Event:
     text: str
     ts: str
     thread: str
-
-    def user_name(self) -> str:
-        return _getUser(self.user_id)['name']

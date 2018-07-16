@@ -15,16 +15,17 @@ class ChessManager:
         self.STARTUP_STATE = {}
 
     # triggered by 'chess ai'
-    def onAi(self, slack, args, event):
+    def onAi(self, slack, cmd):
         """Battle an AI."""
-        response = "So I hear " + event.user_name + \
+        user_name, channel, thread = cmd.user_name, cmd.channel, cmd.thread
+        response = "So I hear " + user_name + \
             " wants to fight some AI... we're working on it!"
-        slack.rtm_send_message(event.channel, response, event.thread)
+        slack.rtm_send_message(channel, response, thread)
 
     # triggered by 'chess start'
-    def onStart(self, slack, args, event):
+    def onStart(self, slack, cmd):
         """Start a new game."""
-        channel, thread = event.channel, event.thread
+        channel, thread = cmd.channel, cmd.thread
         try:
             board = TarraschBoard.from_backend(channel, thread)
         except TarraschNoBoardException:
@@ -42,12 +43,13 @@ class ChessManager:
             "or `{0} claim black`.".format(MP), thread)
 
     # triggered by 'chess claim'
-    def onClaim(self, slack, args, event):
+    def onClaim(self, slack, cmd):
         """Claim a side in the next game. Used after a start command."""
-        channel, thread, user_name = (
-            event.channel,
-            event.thread,
-            event.user_name
+        args, channel, thread, user_name = (
+            cmd.args,
+            cmd.channel,
+            cmd.thread,
+            cmd.user_name
         )
         if TarraschBoard.getDbKey(channel, thread) not in self.STARTUP_STATE:
             return slack.rtm_send_message(
@@ -75,7 +77,7 @@ class ChessManager:
         ]:
             self._start_game(
                 slack,
-                event,
+                cmd,
                 self.STARTUP_STATE[TarraschBoard.getDbKey(
                     channel,
                     thread)
@@ -87,14 +89,14 @@ class ChessManager:
                 ]['black'])
             del self.STARTUP_STATE[TarraschBoard.getDbKey(channel, thread)]
 
-    def _start_game(self, slack, event, white_user, black_user):
-        channel, thread = event.channel, event.thread
+    def _start_game(self, slack, cmd, white_user, black_user):
+        channel, thread = cmd.channel, cmd.thread
         board = TarraschBoard(channel, thread, white_user, black_user)
         board.save()
-        self._render(slack, event, board)
+        self._render(slack, cmd, board)
 
-    def _render(self, slack, event, board=None):
-        channel, thread = event.channel, event.thread
+    def _render(self, slack, cmd, board=None):
+        channel, thread = cmd.channel, cmd.thread
         if not board:
             board = TarraschBoard.from_backend(channel, thread)
         slack.rtm_send_message(channel, board.get_url(shorten=True), thread)
@@ -116,17 +118,19 @@ class ChessManager:
             slack.rtm_send_message(channel, message, thread)
 
     # triggered by 'chess board'
-    def onBoard(self, slack, args, event):
+    def onBoard(self, slack, cmd):
         """Show the current board state for the game in this channel."""
-        self._render(slack, event)
+        self._render(slack, cmd)
 
     # triggered by 'chess move'
-    def onMove(self, slack, args, event):
+    def onMove(self, slack, cmd):
         """Make a new move. Use algebraic notation, e.g. `move Nc3`"""
-        channel, thread, user_name = (
-            event.channel,
-            event.thread,
-            event.user_name
+        args, event, channel, thread, user_name = (
+            cmd.args,
+            cmd.event,
+            cmd.channel,
+            cmd.thread,
+            cmd.user_name
         )
         board = TarraschBoard.from_backend(channel, thread)
         if user_name != board.current_turn_username:  # not this person's turn
@@ -158,12 +162,12 @@ class ChessManager:
             self._handle_game_over(slack, event, board)
 
     # triggered by 'chess takeback'
-    def onTakeback(self, slack, args, event):
+    def onTakeback(self, slack, cmd):
         """Take back the last move. Can only be done by the current player."""
         channel, thread, user_name = (
-            event.channel,
-            event.thread,
-            event.user_name
+            cmd.channel,
+            cmd.thread,
+            cmd.user_name
         )
         board = TarraschBoard.from_backend(channel, thread)
         if user_name != board.current_turn_username:
@@ -175,25 +179,25 @@ class ChessManager:
             )
         board.pop()
         board.save()
-        self._render(slack, event, board)
+        self._render(slack, cmd, board)
 
     # triggered by 'chess forfeit'
-    def onForfeit(self, slack, args, event):
+    def onForfeit(self, slack, cmd):
         """Forfeit the current game."""
-        channel, thread = event.channel, event.thread
+        channel, thread = cmd.channel, cmd.thread
         board = TarraschBoard.from_backend(channel, thread)
         if board.turn:
-            self._handle_game_over(slack, event, board, 'loss')
+            self._handle_game_over(slack, cmd, board, 'loss')
         else:
-            self._handle_game_over(slack, event, board, 'win')
+            self._handle_game_over(slack, cmd, board, 'win')
 
         # triggered by 'chess record'
-    def onRecord(self, slack, args, event):
+    def onRecord(self, slack, cmd):
         """Show your record against each of your opponents."""
         channel, thread, user_name = (
-            event.channel,
-            event.thread,
-            event.user_name
+            cmd.channel,
+            cmd.thread,
+            cmd.user_name
         )
         record = db.get(user_name)
         if not record:
@@ -221,9 +225,9 @@ class ChessManager:
         )
 
         # triggered by 'chess leaderboard'
-    def onLeaderboard(self, slack, args, event):
+    def onLeaderboard(self, slack, cmd):
         """Show the overall W/L/D for all players."""
-        channel, thread = event.channel, event.thread
+        channel, thread = cmd.channel, cmd.thread
         table = PrettyTable(['Player', 'Games', 'Wins', 'Losses', 'Draws'])
         if db.scard('players') == 0:
             return slack.rtm_send_message(
@@ -247,9 +251,10 @@ class ChessManager:
             channel, '```\n{}```'.format(table_string), thread)
 
         # triggered by 'chess help'
-    def onHelp(self, slack, args, event):
+    def onHelp(self, slack, cmd):
         help_string = "I am Xybotsu, the chess bot. " + \
             "My code is on GitHub at xybotsu/chessbot.\n\n"
+        channel, thread = cmd.channel, cmd.thread
         for command in sorted(self.COMMANDS.keys()):
             if command == 'help':
                 continue
@@ -259,10 +264,10 @@ class ChessManager:
             )
         help_string += '\nYou can read all about algebraic " + \
             "notation here: https://goo.gl/OOquFQ\n'
-        slack.rtm_send_message(event.channel, help_string, event.thread)
+        slack.rtm_send_message(channel, help_string, thread)
 
-    def _handle_game_over(self, slack, event, board, result=None):
-        channel, thread = event.channel, event.thread
+    def _handle_game_over(self, slack, cmd, board, result=None):
+        channel, thread = cmd.channel, cmd.thread
         if not result:
             if board.result() == '1-0':
                 result = 'win'
