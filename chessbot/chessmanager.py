@@ -252,7 +252,7 @@ class ChessManager:
 
         # triggered by 'chess help'
     def onHelp(self, slack, cmd):
-        help_string = "I am Xybotsu, the chess bot. " + \
+        help_string = "Let's play some chess. " + \
             "My code is on GitHub at xybotsu/chessbot.\n\n"
         channel, thread = cmd.channel, cmd.thread
         for command in sorted(self.COMMANDS.keys()):

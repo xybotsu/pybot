@@ -1,30 +1,30 @@
 import logging
 
 from .chessmanager import ChessManager
-from .Xybotsu import Xybotsu, threadedMessageEvents, messageEvents, slack
+from .Bot import Bot, threadedMessageEvents, messageEvents, slack
 from crypto.CoinMarketCap import getListings, onCryptoListings
 
 if __name__ == '__main__':
     try:
         chess = ChessManager()
-        x = Xybotsu(slack)
+        bot = Bot(slack)
 
         # routes
-        x.register('chess ai', chess.onAi, threadedMessageEvents)
-        x.register('chess start', chess.onStart, threadedMessageEvents)
-        x.register('chess claim', chess.onClaim, threadedMessageEvents)
-        x.register('chess board', chess.onBoard, threadedMessageEvents)
-        x.register('chess move', chess.onMove, threadedMessageEvents)
-        x.register('chess takeback', chess.onTakeback, threadedMessageEvents)
-        x.register('chess forfeit', chess.onForfeit, threadedMessageEvents)
-        x.register('chess record', chess.onRecord, threadedMessageEvents)
-        x.register('chess leaderboard', chess.onLeaderboard,
-                   threadedMessageEvents)
-        x.register('chess help', chess.onHelp, threadedMessageEvents)
+        bot.register('chess ai', chess.onAi, threadedMessageEvents)
+        bot.register('chess start', chess.onStart, threadedMessageEvents)
+        bot.register('chess claim', chess.onClaim, threadedMessageEvents)
+        bot.register('chess board', chess.onBoard, threadedMessageEvents)
+        bot.register('chess move', chess.onMove, threadedMessageEvents)
+        bot.register('chess takeback', chess.onTakeback, threadedMessageEvents)
+        bot.register('chess forfeit', chess.onForfeit, threadedMessageEvents)
+        bot.register('chess record', chess.onRecord, threadedMessageEvents)
+        bot.register('chess leaderboard', chess.onLeaderboard,
+                     threadedMessageEvents)
+        bot.register('chess help', chess.onHelp, threadedMessageEvents)
 
-        x.register('crypto list', onCryptoListings, messageEvents)
+        bot.register('crypto list', onCryptoListings, messageEvents)
 
         # start listening
-        x.listen()
+        bot.listen()
     except Exception as e:  # die on any other error
         logging.exception('Error bubbled up to main loop')

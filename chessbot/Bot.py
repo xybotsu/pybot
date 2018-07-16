@@ -45,7 +45,7 @@ class _MaybeCallback(object):
         self.condition = condition
 
 
-class Xybotsu(object):
+class Bot(object):
 
     def __init__(self, slack):
         self.slack = slack
