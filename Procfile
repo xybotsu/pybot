@@ -1,1 +1,1 @@
-bot: python -m tarrasch
+bot: python -m chessbot
