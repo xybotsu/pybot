@@ -2,7 +2,7 @@ import logging
 
 from .chessmanager import ChessManager
 from .Bot import Bot, threadedMessageEvents, messageEvents, slack
-from crypto.CoinMarketCap import getListings, onCryptoListings
+from crypto.CoinMarketCap import getListings, onCryptoListings, onCryptoPrices
 
 if __name__ == '__main__':
     try:
@@ -23,6 +23,7 @@ if __name__ == '__main__':
         bot.register('chess help', chess.onHelp, threadedMessageEvents)
 
         bot.register('crypto list', onCryptoListings, messageEvents)
+        bot.register('crypto prices', onCryptoPrices, messageEvents)
 
         # start listening
         bot.listen()
