@@ -6,6 +6,7 @@ from .board import TarraschBoard, TarraschNoBoardException
 from chess import SQUARE_NAMES
 from pprint import pprint
 from prettytable import PrettyTable
+from .ai import getMove
 
 COOLDOWN_SECONDS = 0
 MP = 'chess'
@@ -39,8 +40,11 @@ class ChessManager:
         self.STARTUP_STATE[TarraschBoard.getDbKey(channel, thread)] = {}
         slack.rtm_send_message(
             channel,
-            "Let's play chess! I need two players to say `{0} claim white`" +
-            "or `{0} claim black`.".format(MP), thread)
+            (
+                "Let's play chess! I need two players to say `{0} claim white`" +
+                "or `{0} claim black`."
+            ).format(MP),
+            thread)
 
     def onClaim(self, slack, cmd):
         """Claim a side in the next game. Used after a start command."""
@@ -56,13 +60,18 @@ class ChessManager:
                 'Say `{} start` to start a new game.'.format(MP), thread)
 
         color = args[0].lower()
+        ai = args[1] if len(args) > 1 else None  # claim black kasparov
         if color not in ['white', 'black']:
             return slack.rtm_send_message(
                 channel,
-                'Say `{} claim white` or `{} claim black` to pick your side.'
+                'Say `{} claim white` or `{} claim black [ai]` to pick your side.'
                 .format(MP, MP),
                 thread
             )
+
+        # todo: fix architecture
+        if ai == 'kasparov':
+            user_name = 'kasparov'
 
         self.STARTUP_STATE[TarraschBoard.getDbKey(
             channel, thread)][color] = user_name
@@ -147,6 +156,8 @@ class ChessManager:
         move = args[0]
         try:
             board.push_san(move)
+            if board.black_user == 'kasparov':
+                board.push(getMove(board))
         except ValueError:
             return slack.rtm_send_message(
                 channel,
