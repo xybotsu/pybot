@@ -1,12 +1,14 @@
 import logging
 
 from .chessmanager import ChessManager
-from .Bot import Bot, threadedMessageEvents, messageEvents, slack
+from bot.Bot import Bot, threadedMessageEvents, messageEvents, slack
+from bot.redis import redis
 from crypto.CoinMarketCap import getListings, onCryptoListings, onCryptoPrices
+
 
 if __name__ == '__main__':
     try:
-        chess = ChessManager()
+        chess = ChessManager(redis)
         bot = Bot(slack)
 
         # routes

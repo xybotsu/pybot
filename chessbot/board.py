@@ -4,7 +4,7 @@ import datetime
 
 from chess import Board, SQUARES_180, pgn
 
-from .database import singleton as db
+from bot.redis import redis as db
 from .shortener import shorten_url
 
 

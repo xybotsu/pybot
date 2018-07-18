@@ -1,48 +1,12 @@
-from slackclient import SlackClient
-from .config import SLACK_TOKEN
-from typing import Dict, List
-import time
 from dataclasses import dataclass
+from typing import Dict, List
+from redis import from_url, StrictRedis
+from .config import SLACK_TOKEN
+from slackclient import SlackClient
+import time
 
-_USER_CACHE: Dict[str, object] = {}
 
 slack = SlackClient(SLACK_TOKEN)
-
-# store a cache of userId -> userName mappings,
-# so we don't need to make API calls every time
-
-
-def _getUser(user_id):
-    if not _USER_CACHE.get(user_id):
-        _USER_CACHE[user_id] = slack.api_call(
-            'users.info', user=user_id)['user']
-    return _USER_CACHE[user_id]
-
-
-def _isMessageLike(event):
-    return (
-        event.type == 'message' and
-        event.subtype is None and
-        event.text is not None
-    )
-
-
-def threadedMessageEvents(event):
-    return _isMessageLike(event) and event.thread is not None
-
-
-def messageEvents(event):
-    return _isMessageLike(event) and event.thread is None
-
-
-def allEvents(e):
-    return e
-
-
-class _MaybeCallback(object):
-    def __init__(self, callback, condition):
-        self.callback = callback
-        self.condition = condition
 
 
 class Bot(object):
@@ -53,8 +17,19 @@ class Bot(object):
             raise IOError('Connection to Slack failed, check your token')
         self._triggers = {}
 
-    # listens for commands, and process them in turn
+    def register(self, trigger, callback, condition):
+        # registers a trigger, which fires a callback if condition is true
+        maybeCallback = _MaybeCallback(callback, condition)
+        self._triggers.setdefault(trigger, [maybeCallback])
+
+    def notify(self, command):
+        # notifies all subscribers when command triggers, if condition is true
+        for mc in (self._triggers.get(command.trigger, [])):
+            if mc.condition(command.event):
+                mc.callback(self.slack, command)
+
     def listen(self):
+        # listens for commands, and process them in turn
         while True:
             events = filter(lambda e: e.get('type') ==
                             'message' and 'text' in e, self.slack.rtm_read())
@@ -83,17 +58,6 @@ class Bot(object):
                 )
 
         return None
-
-    # registers a trigger, which fires a callback if condition is true
-    def register(self, trigger, callback, condition):
-        maybeCallback = _MaybeCallback(callback, condition)
-        self._triggers.setdefault(trigger, [maybeCallback])
-
-    # notifies all subscribers when command triggers, if condition is true
-    def notify(self, command):
-        for mc in (self._triggers.get(command.trigger, [])):
-            if mc.condition(command.event):
-                mc.callback(self.slack, command)
 
 
 @dataclass
@@ -129,3 +93,37 @@ class Event:
     text: str
     ts: str
     thread: str
+
+
+def threadedMessageEvents(event):
+    return _isMessageLike(event) and event.thread is not None
+
+
+def messageEvents(event):
+    return _isMessageLike(event) and event.thread is None
+
+
+_USER_CACHE: Dict[str, object] = {}
+
+
+def _getUser(user_id):
+    # store a cache of userId -> userName mappings,
+    # so we don't need to make API calls every time
+    if not _USER_CACHE.get(user_id):
+        _USER_CACHE[user_id] = slack.api_call(
+            'users.info', user=user_id)['user']
+    return _USER_CACHE[user_id]
+
+
+def _isMessageLike(event):
+    return (
+        event.type == 'message' and
+        event.subtype is None and
+        event.text is not None
+    )
+
+
+class _MaybeCallback(object):
+    def __init__(self, callback, condition):
+        self.callback = callback
+        self.condition = condition

@@ -4,17 +4,18 @@ import time
 from .analysis import upload_analysis
 from .board import TarraschBoard, TarraschNoBoardException
 from chess import SQUARE_NAMES
-from .config import MESSAGE_PREFIX as MP, COOLDOWN_SECONDS
-from .database import singleton as db
 from pprint import pprint
 from prettytable import PrettyTable
 
+COOLDOWN_SECONDS = 0
+MP = 'chess'
+
 
 class ChessManager:
-    def __init__(self):
+    def __init__(self, db):
+        self.db = db
         self.STARTUP_STATE = {}
 
-    # triggered by 'chess ai'
     def onAi(self, slack, cmd):
         """Battle an AI."""
         user_name, channel, thread = cmd.user_name, cmd.channel, cmd.thread
@@ -22,7 +23,6 @@ class ChessManager:
             " wants to fight some AI... we're working on it!"
         slack.rtm_send_message(channel, response, thread)
 
-    # triggered by 'chess start'
     def onStart(self, slack, cmd):
         """Start a new game."""
         channel, thread = cmd.channel, cmd.thread
@@ -42,7 +42,6 @@ class ChessManager:
             "Let's play chess! I need two players to say `{0} claim white`" +
             "or `{0} claim black`.".format(MP), thread)
 
-    # triggered by 'chess claim'
     def onClaim(self, slack, cmd):
         """Claim a side in the next game. Used after a start command."""
         args, channel, thread, user_name = (
@@ -117,12 +116,10 @@ class ChessManager:
                 message += ' Check.'
             slack.rtm_send_message(channel, message, thread)
 
-    # triggered by 'chess board'
     def onBoard(self, slack, cmd):
         """Show the current board state for the game in this channel."""
         self._render(slack, cmd)
 
-    # triggered by 'chess move'
     def onMove(self, slack, cmd):
         """Make a new move. Use algebraic notation, e.g. `move Nc3`"""
         args, event, channel, thread, user_name = (
@@ -161,7 +158,6 @@ class ChessManager:
         if board.is_game_over():
             self._handle_game_over(slack, event, board)
 
-    # triggered by 'chess takeback'
     def onTakeback(self, slack, cmd):
         """Take back the last move. Can only be done by the current player."""
         channel, thread, user_name = (
@@ -181,7 +177,6 @@ class ChessManager:
         board.save()
         self._render(slack, cmd, board)
 
-    # triggered by 'chess forfeit'
     def onForfeit(self, slack, cmd):
         """Forfeit the current game."""
         channel, thread = cmd.channel, cmd.thread
@@ -191,7 +186,6 @@ class ChessManager:
         else:
             self._handle_game_over(slack, cmd, board, 'win')
 
-        # triggered by 'chess record'
     def onRecord(self, slack, cmd):
         """Show your record against each of your opponents."""
         channel, thread, user_name = (
@@ -199,7 +193,7 @@ class ChessManager:
             cmd.thread,
             cmd.user_name
         )
-        record = db.get(user_name)
+        record = self.db.get(user_name)
         if not record:
             return slack.rtm_send_message(
                 channel,
@@ -224,19 +218,18 @@ class ChessManager:
             thread
         )
 
-        # triggered by 'chess leaderboard'
     def onLeaderboard(self, slack, cmd):
         """Show the overall W/L/D for all players."""
         channel, thread = cmd.channel, cmd.thread
         table = PrettyTable(['Player', 'Games', 'Wins', 'Losses', 'Draws'])
-        if db.scard('players') == 0:
+        if self.db.scard('players') == 0:
             return slack.rtm_send_message(
                 channel,
                 'No games have been recorded.',
                 thread
             )
-        for player in db.smembers('players'):
-            record = db.get(player)
+        for player in self.db.smembers('players'):
+            record = self.db.get(player)
             if not record:
                 continue
             record = json.loads(str(record))
@@ -250,7 +243,6 @@ class ChessManager:
         slack.rtm_send_message(
             channel, '```\n{}```'.format(table_string), thread)
 
-        # triggered by 'chess help'
     def onHelp(self, slack, cmd):
         help_string = "Let's play some chess. " + \
             "My code is on GitHub at xybotsu/chessbot.\n\n"
@@ -265,6 +257,23 @@ class ChessManager:
         help_string += '\nYou can read all about algebraic " + \
             "notation here: https://goo.gl/OOquFQ\n'
         slack.rtm_send_message(channel, help_string, thread)
+
+    def _update_records(self, white_user, black_user, result):
+        white_result = 'win' if result == 'win' else 'loss'
+        black_result = 'loss' if result == 'win' else 'win'
+        if result == 'draw':
+            white_result, black_result = 'draw', 'draw'
+        self._update_record(white_user, black_user, white_result)
+        self._update_record(black_user, white_user, black_result)
+        self.db.sadd('players', white_user)
+        self.db.sadd('players', black_user)
+
+    def _update_record(self, user, against, result):
+        record = json.loads(str(self.db.get(user) or {}))
+        if against not in record:
+            record[against] = {'win': 0, 'loss': 0, 'draw': 0}
+        record[against][result] += 1
+        self.db.set(user, json.dumps(record))
 
     def _handle_game_over(self, slack, cmd, board, result=None):
         channel, thread = cmd.channel, cmd.thread
@@ -281,7 +290,7 @@ class ChessManager:
             else:
                 result = 'draw'
         if board.white_user != board.black_user:
-            _update_records(board.white_user, board.black_user, result)
+            self._update_records(board.white_user, board.black_user, result)
 
         # Upload game for analysis
         try:
@@ -332,22 +341,3 @@ def _humanize(seconds):
     elif seconds < 60 * 60 * 24:
         return '{} hours'.format(int(round(seconds / (60 * 60))))
     return '{} days'.format(int(round(seconds / (60 * 60 * 24))))
-
-
-def _update_records(white_user, black_user, result):
-    white_result = 'win' if result == 'win' else 'loss'
-    black_result = 'loss' if result == 'win' else 'win'
-    if result == 'draw':
-        white_result, black_result = 'draw', 'draw'
-    _update_record(white_user, black_user, white_result)
-    _update_record(black_user, white_user, black_result)
-    db.sadd('players', white_user)
-    db.sadd('players', black_user)
-
-
-def _update_record(user, against, result):
-    record = json.loads(str(db.get(user) or {}))
-    if against not in record:
-        record[against] = {'win': 0, 'loss': 0, 'draw': 0}
-    record[against][result] += 1
-    db.set(user, json.dumps(record))
