@@ -1,15 +1,17 @@
 import logging
 
 from .chessmanager import ChessManager
-from bot.Bot import Bot, threadedMessageEvents, messageEvents, slack
+from bot.Bot import Bot, threadedMessageEvents, messageEvents
+from bot.config import SLACK_TOKEN
 from bot.redis import redis
 from crypto.CoinMarketCap import getListings, onCryptoListings, onCryptoPrices
+from slackclient import SlackClient
 
 
 if __name__ == '__main__':
     try:
         chess = ChessManager(redis)
-        bot = Bot(slack)
+        bot = Bot(SlackClient(SLACK_TOKEN))
 
         # routes
         bot.register('chess ai', chess.onAi, threadedMessageEvents)

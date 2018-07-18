@@ -1,12 +1,9 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import List
 from redis import from_url, StrictRedis
 from .config import SLACK_TOKEN
-from slackclient import SlackClient
+from .users import getUser
 import time
-
-
-slack = SlackClient(SLACK_TOKEN)
 
 
 class Bot(object):
@@ -68,7 +65,7 @@ class Command:
 
     @property
     def user_name(self) -> str:
-        return _getUser(self.event.user_id)['name']
+        return getUser(self.event.user_id)['name']
 
     @property
     def channel(self) -> str:
@@ -101,18 +98,6 @@ def threadedMessageEvents(event):
 
 def messageEvents(event):
     return _isMessageLike(event) and event.thread is None
-
-
-_USER_CACHE: Dict[str, object] = {}
-
-
-def _getUser(user_id):
-    # store a cache of userId -> userName mappings,
-    # so we don't need to make API calls every time
-    if not _USER_CACHE.get(user_id):
-        _USER_CACHE[user_id] = slack.api_call(
-            'users.info', user=user_id)['user']
-    return _USER_CACHE[user_id]
 
 
 def _isMessageLike(event):
