@@ -16,7 +16,7 @@ if __name__ == '__main__':
             SLACK_TOKEN,
             Bot(
                 'chessbot',
-                'https://avatars.slack-edge.com/2018-07-12/397402417555_1930b48e0e8bc72941aa_48.png'
+                ':chess:'
             ),
             redis
         )
@@ -37,7 +37,7 @@ if __name__ == '__main__':
             SLACK_TOKEN,
             Bot(
                 'cryptobot',
-                'https://www.dogecoingold.com/wp-content/uploads/2017/11/new-logo-1.png'
+                ':doge:'
             ),
             CryptoTrader(redis, 'test')
         )

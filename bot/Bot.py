@@ -10,7 +10,7 @@ from slackclient import SlackClient
 @dataclass
 class Bot:
     name: str
-    icon_url: str
+    icon_emoji: str
 
 
 class SlackBot(SlackClient):
@@ -30,7 +30,7 @@ class SlackBot(SlackClient):
             text=message,
             thread_ts=thread,
             username=self.bot.name,
-            icon_url=self.bot.icon_url
+            icon_emoji=self.bot.icon_emoji
         )
 
     def register(self, trigger, callback, condition):
