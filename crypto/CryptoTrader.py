@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pickle
 from typing import Dict, List
-from .CoinMarketCap import CachedGet, CoinMarketCapApi
+from .CoinMarketCap import CachedGet, CoinMarketCapApi, Ticker
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
@@ -122,6 +122,27 @@ class CryptoTrader:
             value=user.value(self.api.getPrices())
         )
 
+    def topCoins(self, n: int) -> str:
+        topTickers = self.api.getTopNTickersAndPrices(n)
+        table = PrettyTable(
+            [
+                'Coin', 'Rank', 'Vol (24h)', 'Price',
+                'Mkt Cap', '% Chg 1h', '% Chg 24h', '% Chg 7d'
+            ]
+        )
+        for ticker in topTickers:
+            table.add_row([
+                ticker.symbol,
+                ticker.rank,
+                _format_suffix(ticker.quotes['USD'].volume_24h),
+                _format_money(ticker.quotes['USD'].price),
+                _format_suffix(ticker.quotes['USD'].market_cap),
+                _format_pct(ticker.quotes['USD'].percent_change_1h),
+                _format_pct(ticker.quotes['USD'].percent_change_24h),
+                _format_pct(ticker.quotes['USD'].percent_change_7d),
+            ])
+        return table.get_string()
+
     def leaderboard(self) -> str:
         users = self._getAllUsers()
 
@@ -163,4 +184,17 @@ class InsufficientCoinsError(Error):
 
 
 def _format_money(n: float) -> str:
-    return "${0:.2f}".format(n)
+    return "${0:.1f}".format(n)
+
+
+def _format_pct(n: float) -> str:
+    return "{0:.1f}".format(n)
+
+
+def _format_suffix(num):
+    magnitude = 0
+    while abs(num) >= 1000:
+        magnitude += 1
+        num /= 1000.0
+    # add more suffixes if you need them
+    return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])

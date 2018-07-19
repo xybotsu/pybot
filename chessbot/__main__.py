@@ -47,6 +47,7 @@ if __name__ == '__main__':
         crypto.register('crypto sell', crypto.onSell, allMessageEvents)
         crypto.register('crypto leaderboard',
                         crypto.onLeaderboard, allMessageEvents)
+        crypto.register('crypto top', crypto.onTopCoins, allMessageEvents)
         crypto.register('crypto help', crypto.onHelp, allMessageEvents)
 
         # start listening in parallel

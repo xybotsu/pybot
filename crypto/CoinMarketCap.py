@@ -1,7 +1,7 @@
 from requests import get, Response
 from json import loads, JSONDecoder
-from .models import Listings, ListingsDecoder, Tickers, TickersDecoder
-from typing import Dict, Tuple
+from .models import Listings, ListingsDecoder, Ticker, Tickers, TickersDecoder
+from typing import Dict, List, Tuple
 import time
 
 
@@ -70,3 +70,11 @@ class CoinMarketCapApi:
             ticker.symbol.lower(): ticker.quotes['USD'].price
             for ticker in self.getTickers().data
         }
+
+    def getTopNTickersAndPrices(self, n: int) -> List[Ticker]:
+        tickers = self.getTickers().data
+        sortedTickers = sorted(
+            tickers,
+            key=lambda t: t.rank
+        )[0:n - 1]
+        return sortedTickers

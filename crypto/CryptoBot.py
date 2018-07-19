@@ -24,6 +24,7 @@ class CryptoBot(SlackBot):
             [
                 "crypto help",
                 "crypto leaderboard",
+                "crypto top",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
                 "crypto price <ticker>"
@@ -137,11 +138,21 @@ class CryptoBot(SlackBot):
         }
         self.postMessage(channel, _mono(", ".join(res)), thread)
 
-    def onListings(self, cmd: Command):
-        channel, thread = cmd.channel, cmd.thread
-        str = ", ".join(
-            list(map(lambda d: d.symbol, self.trader.api.getListings().data)))
-        self.postMessage(channel, _mono(str), thread)
+    def onTopCoins(self, cmd: Command):
+        # example slack commands:
+        # crypto top
+        # crypto top 100
+        args, channel, thread = cmd.args, cmd.channel, cmd.thread
+        try:
+            numCoins = int(args[0]) if args else 10
+            numCoins = numCoins if numCoins <= 25 else 25
+            str = self.trader.topCoins(numCoins)
+            self.postMessage(channel, _mono(str), thread)
+        except:
+            self.postMessage
+            (
+                channel, 'crypto top <numCoins> ... try again', thread
+            )
 
 
 def _mono(str):
