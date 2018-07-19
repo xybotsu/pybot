@@ -6,7 +6,7 @@ from bot.config import SLACK_TOKEN
 from bot.redis import redis
 from slackclient import SlackClient
 from crypto.CryptoTrader import CryptoTrader
-from crypto.SlackTrader import CryptoBot
+from crypto.CryptoBot import CryptoBot
 from multiprocessing import Process
 
 
