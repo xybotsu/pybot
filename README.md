@@ -1,3 +1,36 @@
+### Slack Cryptobot
+
+![get live pricing](https://i.imgur.com/KkoFvwR.png)
+
+![see top coins](https://i.imgur.com/Le5uEO8.png)
+
+![buy](https://i.imgur.com/JfWEpBb.png)
+
+![sell](https://i.imgur.com/YxAlG6r.png)
+
+![track winnings](https://i.imgur.com/u8KImW6.png)
+
+![help](https://i.imgur.com/i0FjBCV.png)
+
+### What is this?
+Buy & Sell crypto currencies and build your portfolio. Uses live pricing.
+
+Check the leaderboard to see who's winning!
+
+Prices are refreshed every 5 minutes, per CoinMarketCap's API.
+
+### Full List of Commands
+```
+crypto help
+crypto leaderboard
+crypto top
+crypto buy <ticker> <quantity>
+crypto sell <ticker> <quantity>
+crypto price <ticker>
+```
+
+---
+
 ### Slack Chessbot
 
 ![](https://i.imgur.com/GdGnKBh.png)
