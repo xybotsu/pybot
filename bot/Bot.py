@@ -1,18 +1,37 @@
 from dataclasses import dataclass
-from typing import List
+from typing import Dict, List
 from redis import from_url, StrictRedis
 from .config import SLACK_TOKEN
 from .users import getUser
 import time
+from slackclient import SlackClient
 
 
-class Bot(object):
+@dataclass
+class Bot:
+    name: str
+    icon_url: str
 
-    def __init__(self, slack):
-        self.slack = slack
-        if (not self.slack.rtm_connect()):
+
+class SlackBot(SlackClient):
+
+    def __init__(self, token: str, bot: Bot, db) -> None:
+        super().__init__(token)
+        if (not self.rtm_connect()):
             raise IOError('Connection to Slack failed, check your token')
-        self._triggers = {}
+        self.bot = bot
+        self.db = db
+        self._triggers: Dict = {}
+
+    def postMessage(self, channel: str, message: str, thread: str):
+        self.api_call(
+            'chat.postMessage',
+            channel=channel,
+            text=message,
+            thread_ts=thread,
+            username=self.bot.name,
+            icon_url=self.bot.icon_url
+        )
 
     def register(self, trigger, callback, condition):
         # registers a trigger, which fires a callback if condition is true
@@ -23,13 +42,13 @@ class Bot(object):
         # notifies all subscribers when command triggers, if condition is true
         for mc in (self._triggers.get(command.trigger, [])):
             if mc.condition(command.event):
-                mc.callback(self.slack, command)
+                mc.callback(command)
 
     def listen(self):
         # listens for commands, and process them in turn
         while True:
             events = filter(lambda e: e.get('type') ==
-                            'message' and 'text' in e, self.slack.rtm_read())
+                            'message' and 'text' in e, self.rtm_read())
             for event in events:
                 command = self._messageEventToCommand(event)
                 if command:
@@ -92,7 +111,7 @@ class Event:
     thread: str
 
 
-def threadedMessageEvents(event):
+def threaded(event):
     return allMessageEvents(event) and event.thread is not None
 
 

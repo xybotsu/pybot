@@ -92,7 +92,7 @@ class CryptoTrader:
         ).format(
             user_name=user.user_name,
             balance=user.balance,
-            portfolio=user.portfolio,
+            portfolio=user.display_portfolio(),
             value=user.value(getPrices())
         )
 
@@ -102,6 +102,14 @@ class User:
     user_name: str
     balance: float
     portfolio: Dict[str, float]
+
+    def display_portfolio(self) -> Dict[str, float]:
+        # don't include entries with 0 value
+        return {
+            k: v
+            for k, v in self.portfolio.items()
+            if v != 0.0
+        }
 
     def value(self, prices) -> float:
         sum = 0
