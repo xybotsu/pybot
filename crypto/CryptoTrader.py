@@ -131,18 +131,19 @@ class CryptoTrader:
         prices = self.api.getPrices()
 
         table = PrettyTable(
-            ['Player', 'Coins', 'Coins $', 'Cash $', 'Total'])
+            ['Player', 'Coins', 'Coins $', 'Cash $', 'Total $'])
         for user in users:
             table.add_row([
                 user.user_name,
                 user.display_portfolio(),
-                _format_money(user.value(prices)),
-                _format_money(user.balance),
-                _format_money(user.balance + user.value(prices))
+                user.value(prices),
+                user.balance,
+                user.balance + user.value(prices)
             ])
         return table.get_string(
-            sortby='Total',
-            reversesort=True
+            sortby='Total $',
+            reversesort=True,
+            float_format='0.2'
         )
 
 
