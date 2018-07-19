@@ -4,11 +4,18 @@ from .CryptoTrader import (
     InsufficientCoinsError
 )
 from .CoinMarketCap import getListings, getPrices
+from slackclient import SlackClient
+from bot.Bot import Command
 
 
 class SlackTrader(CryptoTrader):
 
-    def onHelp(self, slack, cmd):
+    def __init__(self, db, group, botname, icon_url):
+        super().__init__(db, group)
+        self.botname = botname
+        self.icon_url = icon_url
+
+    def onHelp(self, slack: SlackClient, cmd: Command):
         # crypto help
         channel, thread = cmd.channel, cmd.thread
         msg = "\n".join(
@@ -27,7 +34,7 @@ class SlackTrader(CryptoTrader):
             thread
         )
 
-    def onBuy(self, slack, cmd):
+    def onBuy(self, slack: SlackClient, cmd: Command):
         # crypto buy eth 200
         user_name, args, channel, thread = (
             cmd.user_name,
@@ -59,7 +66,7 @@ class SlackTrader(CryptoTrader):
                 thread
             )
 
-    def onSell(self, slack, cmd):
+    def onSell(self, slack: SlackClient, cmd: Command):
         # crypto sell eth 200
         user_name, args, channel, thread = (
             cmd.user_name,
@@ -92,20 +99,29 @@ class SlackTrader(CryptoTrader):
                 thread
             )
 
-    def onStatus(self, slack, cmd):
+    def onStatus(self, slack: SlackClient, cmd: Command):
         # crypto status
-        user_name, channel, thread = (
-            cmd.user_name,
+        channel, thread = (
             cmd.channel,
             cmd.thread
         )
-        slack.rtm_send_message(
-            channel,
-            self.status(user_name),
-            thread
+        print(channel)
+        print(thread)
+        slack.api_call(
+            'chat.postMessage',
+            channel=channel,
+            text="foo bar",
+            thread_ts=thread,
+            username=self.botname,
+            icon_url=self.icon_url
         )
+        # slack.rtm_send_message(
+        #     channel,
+        #     self.status(user_name),
+        #     thread
+        # )
 
-    def onPrices(self, slack, cmd):
+    def onPrices(self, slack: SlackClient, cmd: Command):
         # example slack command:
         # "crypto price BTC ETH"
         tickers, channel, thread = cmd.args, cmd.channel, cmd.thread
@@ -116,7 +132,7 @@ class SlackTrader(CryptoTrader):
         }
         slack.rtm_send_message(channel, _mono(", ".join(res)), thread)
 
-    def onListings(self, slack, cmd):
+    def onListings(self, slack: SlackClient, cmd: Command):
         channel, thread = cmd.channel, cmd.thread
         str = ", ".join(list(map(lambda d: d.symbol, getListings().data)))
         slack.rtm_send_message(channel, _mono(str), thread)

@@ -1,7 +1,7 @@
 import logging
 
 from .chessmanager import ChessManager
-from bot.Bot import Bot, threadedMessageEvents, messageEvents
+from bot.Bot import Bot, threadedMessageEvents, allMessageEvents
 from bot.config import SLACK_TOKEN
 from bot.redis import redis
 from slackclient import SlackClient
@@ -27,14 +27,19 @@ if __name__ == '__main__':
         bot.register('chess help', chess.onHelp, threadedMessageEvents)
 
         # trading routes
-        trader = SlackTrader(redis, 'test')
-        bot.register('crypto list', trader.onListings, messageEvents)
-        bot.register('crypto prices', trader.onPrices, messageEvents)
-        bot.register('crypto price', trader.onPrices, messageEvents)
-        bot.register('crypto buy', trader.onBuy, messageEvents)
-        bot.register('crypto sell', trader.onSell, messageEvents)
-        bot.register('crypto status', trader.onStatus, messageEvents)
-        bot.register('crypto help', trader.onHelp, messageEvents)
+        trader = SlackTrader(
+            redis,
+            'test',
+            'Crypto Bot',
+            'https://www.dogecoingold.com/wp-content/uploads/2017/11/new-logo-1.png'
+        )
+        bot.register('crypto list', trader.onListings, allMessageEvents)
+        bot.register('crypto prices', trader.onPrices, allMessageEvents)
+        bot.register('crypto price', trader.onPrices, allMessageEvents)
+        bot.register('crypto buy', trader.onBuy, allMessageEvents)
+        bot.register('crypto sell', trader.onSell, allMessageEvents)
+        bot.register('crypto status', trader.onStatus, allMessageEvents)
+        bot.register('crypto help', trader.onHelp, allMessageEvents)
 
         # start listening
         bot.listen()

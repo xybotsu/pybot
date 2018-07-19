@@ -93,14 +93,14 @@ class Event:
 
 
 def threadedMessageEvents(event):
-    return _isMessageLike(event) and event.thread is not None
+    return allMessageEvents(event) and event.thread is not None
 
 
 def messageEvents(event):
-    return _isMessageLike(event) and event.thread is None
+    return allMessageEvents(event) and event.thread is None
 
 
-def _isMessageLike(event):
+def allMessageEvents(event):
     return (
         event.type == 'message' and
         event.subtype is None and
