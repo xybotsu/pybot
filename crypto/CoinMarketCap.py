@@ -76,5 +76,5 @@ class CoinMarketCapApi:
         sortedTickers = sorted(
             tickers,
             key=lambda t: t.rank
-        )[0:n - 1]
+        )[0:n]
         return sortedTickers
