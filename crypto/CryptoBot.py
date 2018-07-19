@@ -43,8 +43,15 @@ class CryptoBot(SlackBot):
             cmd.channel,
             cmd.thread
         )
-        ticker = args[0].lower()
-        quantity = float(args[1])
+        try:
+            ticker = args[0].lower()
+            quantity = float(args[1])
+        except:
+            self.postMessage(
+                channel,
+                "Invalid Command.",
+                thread
+            )
         try:
             self.trader.buy(user_name, ticker, quantity)
             self.postMessage(
@@ -75,8 +82,15 @@ class CryptoBot(SlackBot):
             cmd.channel,
             cmd.thread
         )
-        ticker = args[0].lower()
-        quantity = float(args[1])
+        try:
+            ticker = args[0].lower()
+            quantity = float(args[1])
+        except:
+            self.postMessage(
+                channel,
+                "Invalid Command.",
+                thread
+            )
         try:
             self.trader.sell(user_name, ticker, quantity)
             self.postMessage(
