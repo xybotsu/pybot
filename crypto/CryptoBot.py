@@ -50,9 +50,10 @@ class CryptoBot(SlackBot):
         except:
             self.postMessage(
                 channel,
-                "Invalid Command.",
+                "`crypto buy <ticker> <quantity>` is the format you're looking for.",
                 thread
             )
+            return
         try:
             self.trader.buy(user_name, ticker, quantity)
             self.postMessage(
@@ -89,9 +90,10 @@ class CryptoBot(SlackBot):
         except:
             self.postMessage(
                 channel,
-                "Invalid Command.",
+                "`crypto sell <ticker> <quantity>` is the format you're looking for.",
                 thread
             )
+            return
         try:
             self.trader.sell(user_name, ticker, quantity)
             self.postMessage(
