@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Callable, Dict, List
 from redis import from_url, StrictRedis
 from .config import SLACK_TOKEN
 from .users import getUser
@@ -15,7 +15,7 @@ class Bot:
 
 class SlackBot(SlackClient):
 
-    def __init__(self, token: str, bot: Bot, db) -> None:
+    def __init__(self, token: str, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token)
         if (not self.rtm_connect()):
             raise IOError('Connection to Slack failed, check your token')
@@ -33,7 +33,7 @@ class SlackBot(SlackClient):
             icon_emoji=self.bot.icon_emoji
         )
 
-    def register(self, trigger, callback, condition):
+    def register(self, trigger: str, callback, condition):
         # registers a trigger, which fires a callback if condition is true
         maybeCallback = _MaybeCallback(callback, condition)
         self._triggers.setdefault(trigger, [maybeCallback])
@@ -77,10 +77,21 @@ class SlackBot(SlackClient):
 
 
 @dataclass
+class Event:
+    type: str
+    subtype: str
+    channel: str
+    user_id: str
+    text: str
+    ts: str
+    thread: str
+
+
+@dataclass
 class Command:
     trigger: str
     args: List[str]
-    event: object
+    event: Event
 
     @property
     def user_name(self) -> str:
@@ -98,17 +109,6 @@ class Command:
         print("{trigger} {args} {event}".format(
             trigger=self.trigger, args=self.args, event=self.event)
         )
-
-
-@dataclass
-class Event:
-    type: str
-    subtype: str
-    channel: str
-    user_id: str
-    text: str
-    ts: str
-    thread: str
 
 
 def threaded(event):

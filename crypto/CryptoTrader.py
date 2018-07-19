@@ -21,10 +21,10 @@ class User:
             if v != 0.0
         }
 
-    def value(self, prices) -> float:
-        sum = 0
+    def value(self, prices: Dict[str, float]) -> float:
+        sum = 0.0
         for ticker, quantity in self.portfolio.items():
-            sum = sum + prices.get(ticker) * quantity
+            sum = sum + prices[ticker] * quantity
         return sum
 
 
@@ -32,7 +32,7 @@ class CryptoTrader:
 
     INITIAL_POT_SIZE = 100000
 
-    def __init__(self, db: StrictRedis, group) -> None:
+    def __init__(self, db: StrictRedis, group: str) -> None:
         self.db = db
         self.group = group
         self.api = CoinMarketCapApi()
@@ -158,5 +158,5 @@ class InsufficientCoinsError(Error):
     pass
 
 
-def _format_money(n):
+def _format_money(n: float) -> str:
     return "${0:.2f}".format(n)

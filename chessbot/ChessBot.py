@@ -34,8 +34,8 @@ class ChessBot(SlackBot):
         self.postMessage(
             channel,
             (
-                "Let's play chess! I need two players to say `{0} claim white`" +
-                "or `{0} claim black`."
+                "Let's play chess! I need two players to say" +
+                "{0} claim white or `{0} claim black`."
             ).format(MP),
             thread
         )
@@ -58,7 +58,10 @@ class ChessBot(SlackBot):
         if color not in ['white', 'black']:
             return self.postMessage(
                 channel,
-                'Say `{} claim white` or `{} claim black [ai]` to pick your side.'
+                (
+                    'Say `{} claim white` or `{} claim black [ai]`' +
+                    ' to pick your side.'
+                )
                 .format(MP, MP),
                 thread
             )
@@ -342,7 +345,7 @@ class ChessBot(SlackBot):
     }
 
 
-def _humanize(seconds):
+def _humanize(seconds: int) -> str:
     if seconds < 120:
         return '{} seconds'.format(int(round(seconds)))
     elif seconds < 60 * 60 * 2:

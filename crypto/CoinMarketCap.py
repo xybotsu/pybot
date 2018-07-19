@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 import time
 
 
-def current_time_ms():
+def current_time_ms() -> int:
     return int(round(time.time() * 1000))
 
 
@@ -16,10 +16,10 @@ class CachedGet:
         self.cache_time_ms = cache_time_ms
         self.total_api_calls = 0
 
-    def _isOld(self, t) -> bool:
+    def _isOld(self, t: int) -> bool:
         return current_time_ms() - t > self.cache_time_ms
 
-    def _needsCacheRefresh(self, url) -> bool:
+    def _needsCacheRefresh(self, url: str) -> bool:
         # True if url not in cache OR url is stale in cache
 
         isNotInCache = url not in self.cache.keys()
@@ -30,7 +30,7 @@ class CachedGet:
 
         return isNotInCache or isStaleInCache
 
-    def get(self, url) -> Response:
+    def get(self, url: str) -> Response:
         if self._needsCacheRefresh(url):
             print("cache stale; fetching {url}".format(url=url))
             resp = get(url)
