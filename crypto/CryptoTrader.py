@@ -41,13 +41,16 @@ class CryptoTrader:
 
     def sell(self, user_name, ticker, quantity):
         user = self._getUser(user_name)
+        prices = getPrices()
         ticker = ticker.lower()
 
         if (
             user.portfolio.get(ticker) and
             user.portfolio.get(ticker) >= quantity
         ):
+            sellPrice = prices.get(ticker) * quantity
             user.portfolio[ticker] -= quantity
+            user.balance += sellPrice
             self._setUser(user)
         else:
             raise InsufficientCoinsError(
