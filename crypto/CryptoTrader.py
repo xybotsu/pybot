@@ -98,6 +98,8 @@ class CryptoTrader:
 
     def _getAllUsers(self) -> List[User]:
         userKeys = self.db.keys("cryptoTrader.{g}.*".format(g=self.group))
+        if not userKeys:
+            return []
         return [
             pickle.loads(u)
             for u in self.db.mget(userKeys)
@@ -122,6 +124,10 @@ class CryptoTrader:
 
     def leaderboard(self) -> str:
         users = self._getAllUsers()
+
+        if not users:
+            return 'No leaderboard created yet. `crypto help` to start.'
+
         prices = getPrices()
 
         table = PrettyTable(
