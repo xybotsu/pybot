@@ -24,10 +24,10 @@ class CryptoBot(SlackBot):
         msg = "\n".join(
             [
                 "crypto help",
+                "crypto leaderboard",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
                 "crypto price <ticker>",
-                "crypto status",
                 "crypto listings"
             ]
         )
@@ -55,7 +55,7 @@ class CryptoBot(SlackBot):
                 .format(u=user_name, t=ticker, q=quantity),
                 thread
             )
-            self.onStatus(cmd)
+            self.onLeaderboard(cmd)
         except InsufficientFundsError:
             self.postMessage(
                 channel,
@@ -87,7 +87,7 @@ class CryptoBot(SlackBot):
                 .format(u=user_name, t=ticker, q=quantity),
                 thread
             )
-            self.onStatus(cmd)
+            self.onLeaderboard(cmd)
         except InsufficientCoinsError:
             self.postMessage(
                 channel,
@@ -102,16 +102,15 @@ class CryptoBot(SlackBot):
                 thread
             )
 
-    def onStatus(self, cmd: Command):
-        # crypto status
-        channel, user_name, thread = (
+    def onLeaderboard(self, cmd: Command):
+        # crypto leaderboard
+        channel, thread = (
             cmd.channel,
-            cmd.user_name,
             cmd.thread
         )
         self.postMessage(
             channel,
-            self.trader.status(user_name),
+            _mono(self.trader.leaderboard()),
             thread
         )
 
