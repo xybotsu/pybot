@@ -45,6 +45,7 @@ class SlackTrader(CryptoTrader):
                 .format(u=user_name, t=ticker, q=quantity),
                 thread
             )
+            self.onStatus(slack, cmd)
         except InsufficientFundsError:
             slack.rtm_send_message(
                 channel,
@@ -76,6 +77,7 @@ class SlackTrader(CryptoTrader):
                 .format(u=user_name, t=ticker, q=quantity),
                 thread
             )
+            self.onStatus(slack, cmd)
         except InsufficientCoinsError:
             slack.rtm_send_message(
                 channel,

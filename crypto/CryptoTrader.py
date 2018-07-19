@@ -13,7 +13,7 @@ db.set(key: str, val: Any)
 
 class CryptoTrader:
 
-    INITIAL_POT_SIZE = 10000
+    INITIAL_POT_SIZE = 100000
 
     def __init__(self, db, group):
         self.db = db
