@@ -130,21 +130,24 @@ class CryptoTrader:
 
         prices = self.api.getPrices()
 
+        # sort users by total $, descending
+        sortedUsers = sorted(
+            users,
+            key=lambda u: u.balance + u.value(prices),
+            reverse=True
+        )
+
         table = PrettyTable(
             ['Player', 'Coins', 'Coins $', 'Cash $', 'Total $'])
-        for user in users:
+        for user in sortedUsers:
             table.add_row([
                 user.user_name,
                 user.display_portfolio(),
-                user.value(prices),
-                user.balance,
-                user.balance + user.value(prices)
+                _format_money(user.value(prices)),
+                _format_money(user.balance),
+                _format_money(user.balance + user.value(prices))
             ])
-        return table.get_string(
-            sortby='Total $',
-            reversesort=True,
-            float_format='0.2'
-        )
+        return table.get_string()
 
 
 class Error(Exception):
