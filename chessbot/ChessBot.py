@@ -124,9 +124,8 @@ class ChessBot(SlackBot):
 
     def onMove(self, cmd: Command):
         """Make a new move. Use algebraic notation, e.g. `move Nc3`"""
-        args, event, channel, thread, user_name = (
+        args, channel, thread, user_name = (
             cmd.args,
-            cmd.event,
             cmd.channel,
             cmd.thread,
             cmd.user_name
@@ -308,9 +307,8 @@ class ChessBot(SlackBot):
         try:
             url = upload_analysis(board.get_pgn())
             message = 'This game is available for analysis at {}'.format(url)
-        except Exception as e:
-            message = 'There was a problem uploading the game for ' + \
-                'analysis, sorry :anguished:' + e.args
+        except Exception:
+            message = 'There was a problem uploading the game!'
         self.postMessage(channel, message, thread)
 
         board.kill()
