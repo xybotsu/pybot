@@ -41,7 +41,6 @@ if __name__ == '__main__':
             ),
             CryptoTrader(redis, 'test')
         )
-        crypto.register('crypto list', crypto.onListings, allMessageEvents)
         crypto.register('crypto prices', crypto.onPrices, allMessageEvents)
         crypto.register('crypto price', crypto.onPrices, allMessageEvents)
         crypto.register('crypto buy', crypto.onBuy, allMessageEvents)

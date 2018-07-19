@@ -26,8 +26,7 @@ class CryptoBot(SlackBot):
                 "crypto leaderboard",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
-                "crypto price <ticker>",
-                "crypto listings"
+                "crypto price <ticker>"
             ]
         )
         self.postMessage(
