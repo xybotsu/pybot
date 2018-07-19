@@ -16,7 +16,6 @@ class SlackTrader(CryptoTrader):
                 "crypto help",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
-                "crypto sell <ticker> <quantity>",
                 "crypto price <ticker>",
                 "crypto status",
                 "crypto listings"
