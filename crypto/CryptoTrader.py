@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pickle
 from typing import Dict, List
-from .CoinMarketCap import getPrices
+from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
@@ -35,11 +35,12 @@ class CryptoTrader:
     def __init__(self, db: StrictRedis, group) -> None:
         self.db = db
         self.group = group
+        self.api = CoinMarketCapApi()
         pass
 
     def buy(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
-        prices = getPrices()
+        prices = self.api.getPrices()
         ticker = ticker.lower()
 
         purchasePrice = prices[ticker] * quantity
@@ -58,7 +59,7 @@ class CryptoTrader:
 
     def sell(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
-        prices = getPrices()
+        prices = self.api.getPrices()
         ticker = ticker.lower()
 
         if (
@@ -110,7 +111,6 @@ class CryptoTrader:
 
     def status(self, user_name: str) -> str:
         user = self._getUser(user_name)
-        print(user)
         return (
             "```User {user_name} has ${balance} to spend.\n" +
             "Coins owned: {portfolio}\n" +
@@ -119,7 +119,7 @@ class CryptoTrader:
             user_name=user.user_name,
             balance=user.balance,
             portfolio=user.display_portfolio(),
-            value=user.value(getPrices())
+            value=user.value(self.api.getPrices())
         )
 
     def leaderboard(self) -> str:
@@ -128,7 +128,7 @@ class CryptoTrader:
         if not users:
             return 'No leaderboard created yet. `crypto help` to start.'
 
-        prices = getPrices()
+        prices = self.api.getPrices()
 
         table = PrettyTable(
             ['Player', 'Coins', 'Coins $', 'Cash $', 'Total'])

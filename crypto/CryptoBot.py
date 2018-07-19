@@ -3,7 +3,6 @@ from .CryptoTrader import (
     InsufficientFundsError,
     InsufficientCoinsError
 )
-from .CoinMarketCap import getListings, getPrices
 from bot.Bot import Bot, Command, SlackBot
 
 
@@ -120,14 +119,15 @@ class CryptoBot(SlackBot):
         tickers, channel, thread = cmd.args, cmd.channel, cmd.thread
         res = {
             ticker + ": " + str(price)
-            for ticker, price in getPrices().items()
+            for ticker, price in self.trader.api.getPrices().items()
             if ticker.lower() in map(lambda t: t.lower(), tickers)
         }
         self.postMessage(channel, _mono(", ".join(res)), thread)
 
     def onListings(self, cmd: Command):
         channel, thread = cmd.channel, cmd.thread
-        str = ", ".join(list(map(lambda d: d.symbol, getListings().data)))
+        str = ", ".join(
+            list(map(lambda d: d.symbol, self.trader.api.getListings().data)))
         self.postMessage(channel, _mono(str), thread)
 
 
