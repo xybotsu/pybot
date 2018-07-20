@@ -8,6 +8,9 @@ from slackclient import SlackClient
 from crypto.CryptoTrader import CryptoTrader
 from crypto.CryptoBot import CryptoBot
 from multiprocessing import Process
+import http.server
+import socketserver
+import os
 
 
 if __name__ == '__main__':
@@ -50,9 +53,15 @@ if __name__ == '__main__':
         crypto.register('crypto top', crypto.onTopCoins, allMessageEvents)
         crypto.register('crypto help', crypto.onHelp, allMessageEvents)
 
+        # serve images out of img dir
+        os.chdir('img')
+        Handler = http.server.SimpleHTTPRequestHandler
+        httpd = socketserver.TCPServer(("", 80), Handler)
+
         # start listening in parallel
         Process(target=chess.listen).start()
         Process(target=crypto.listen).start()
-
+        Process(target=httpd.serve_forever).start()
+        
     except Exception as e:  # die on any other error
         logging.exception('Error bubbled up to main loop')
