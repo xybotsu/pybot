@@ -56,7 +56,7 @@ if __name__ == '__main__':
         # serve images out of img dir
         os.chdir('img')
         Handler = http.server.SimpleHTTPRequestHandler
-        httpd = socketserver.TCPServer(("", 80), Handler)
+        httpd = socketserver.TCPServer(("", 8000), Handler)
 
         # start listening in parallel
         Process(target=chess.listen).start()
