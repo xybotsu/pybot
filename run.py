@@ -1,6 +1,6 @@
 import logging
 
-from .ChessBot import ChessBot
+from chessbot.ChessBot import ChessBot
 from bot.Bot import SlackBot, Bot, threaded, allMessageEvents
 from bot.config import SLACK_TOKEN
 from bot.redis import redis
@@ -62,6 +62,6 @@ if __name__ == '__main__':
         Process(target=chess.listen).start()
         Process(target=crypto.listen).start()
         Process(target=httpd.serve_forever).start()
-        
+
     except Exception as e:  # die on any other error
         logging.exception('Error bubbled up to main loop')

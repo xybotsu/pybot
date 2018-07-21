@@ -1,1 +1,1 @@
-bot: python -m chessbot
+bot: python run.py
