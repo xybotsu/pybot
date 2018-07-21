@@ -5,6 +5,7 @@ from .CoinMarketCap import CachedGet, CoinMarketCapApi, Ticker
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
+from imagemaker.makePng import getCryptoLeaderboardPng
 
 
 @dataclass
@@ -143,7 +144,7 @@ class CryptoTrader:
             ])
         return table.get_string()
 
-    def leaderboard(self) -> str:
+    def leaderboard(self):
         users = self._getAllUsers()
 
         if not users:
@@ -158,17 +159,20 @@ class CryptoTrader:
             reverse=True
         )
 
-        table = PrettyTable(
-            ['Player', 'Coins', 'Coins $', 'Cash $', 'Total $'])
+        rows = []
         for user in sortedUsers:
-            table.add_row([
-                user.user_name,
-                user.display_portfolio(),
-                _format_money(user.value(prices)),
-                _format_money(user.balance),
-                _format_money(user.balance + user.value(prices))
-            ])
-        return table.get_string()
+            rows.append(
+                (
+                    user.user_name,
+                    user.display_portfolio(),
+                    _format_money(user.value(prices)),
+                    _format_money(user.balance),
+                    _format_money(user.balance + user.value(prices))
+                )
+            )
+
+        png = getCryptoLeaderboardPng(rows)
+        return png
 
 
 class Error(Exception):

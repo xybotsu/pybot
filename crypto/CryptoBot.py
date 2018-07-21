@@ -119,14 +119,15 @@ class CryptoBot(SlackBot):
 
     def onLeaderboard(self, cmd: Command):
         # crypto leaderboard
-        channel, thread = (
-            cmd.channel,
-            cmd.thread
+        channel = (
+            cmd.channel
         )
-        self.postMessage(
-            channel,
-            _mono(self.trader.leaderboard()),
-            thread
+        png = self.trader.leaderboard()
+        self.api_call(
+            'files.upload',
+            channels=[channel],
+            filename='leaderboard.png',
+            file=png
         )
 
     def onPrices(self, cmd: Command):
