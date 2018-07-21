@@ -1,4 +1,6 @@
-### Slack Cryptobot
+# Pybot
+
+### Cryptobot
 
 ![get live pricing](https://i.imgur.com/KkoFvwR.png)
 
@@ -31,7 +33,7 @@ crypto price <ticker>
 
 ---
 
-### Slack Chessbot
+### Chessbot
 
 ![](https://i.imgur.com/GdGnKBh.png)
 
