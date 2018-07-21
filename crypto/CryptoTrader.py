@@ -5,7 +5,7 @@ from .CoinMarketCap import CachedGet, CoinMarketCapApi, Ticker
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
-from imagemaker.makePng import getCryptoLeaderboardPng
+from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
 
 
 @dataclass
@@ -125,24 +125,23 @@ class CryptoTrader:
 
     def topCoins(self, n: int) -> str:
         topTickers = self.api.getTopNTickersAndPrices(n)
-        table = PrettyTable(
-            [
-                'Coin', 'Rank', 'Vol (24h)', 'Price',
-                'Mkt Cap', '% Chg 1h', '% Chg 24h', '% Chg 7d'
-            ]
-        )
+
+        rows = []
         for ticker in topTickers:
-            table.add_row([
-                ticker.symbol,
-                ticker.rank,
-                _format_suffix(ticker.quotes['USD'].volume_24h),
-                _format_money(ticker.quotes['USD'].price),
-                _format_suffix(ticker.quotes['USD'].market_cap),
-                _format_pct(ticker.quotes['USD'].percent_change_1h),
-                _format_pct(ticker.quotes['USD'].percent_change_24h),
-                _format_pct(ticker.quotes['USD'].percent_change_7d),
-            ])
-        return table.get_string()
+            rows.append(
+                (
+                    ticker.symbol,
+                    ticker.rank,
+                    _format_suffix(ticker.quotes['USD'].volume_24h),
+                    _format_money(ticker.quotes['USD'].price),
+                    _format_suffix(ticker.quotes['USD'].market_cap),
+                    _format_pct(ticker.quotes['USD'].percent_change_1h),
+                    _format_pct(ticker.quotes['USD'].percent_change_24h),
+                    _format_pct(ticker.quotes['USD'].percent_change_7d)
+                )
+            )
+
+        return getCryptoTopPng(rows)
 
     def leaderboard(self):
         users = self._getAllUsers()
@@ -171,8 +170,7 @@ class CryptoTrader:
                 )
             )
 
-        png = getCryptoLeaderboardPng(rows)
-        return png
+        return getCryptoLeaderboardPng(rows)
 
 
 class Error(Exception):

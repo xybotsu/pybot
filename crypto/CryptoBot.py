@@ -149,8 +149,13 @@ class CryptoBot(SlackBot):
         try:
             numCoins = int(args[0]) if args else 10
             numCoins = numCoins if numCoins <= 25 else 25
-            str = self.trader.topCoins(numCoins)
-            self.postMessage(channel, _mono(str), thread)
+            png = self.trader.topCoins(numCoins)
+            self.api_call(
+                'files.upload',
+                channels=[channel],
+                filename='top coins.png',
+                file=png
+            )
         except:
             self.postMessage
             (

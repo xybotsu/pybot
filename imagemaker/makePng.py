@@ -28,6 +28,12 @@ def getCryptoLeaderboardPng(rows):
     return generate_png(html)
 
 
+def getCryptoTopPng(rows):
+    template = env.get_template('cryptoTop.html')
+    html = template.render(rows=rows)
+    return generate_png(html)
+
+
 def execute_wk(input):
     """
     Generate path for the wkhtmltoimage binary and execute command.
