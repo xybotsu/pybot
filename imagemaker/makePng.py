@@ -42,7 +42,7 @@ def execute_wk(input):
     :return: stdout, stderr
     """
     return subprocess.run(
-        "{path} --width 0 - -".format(path=WK_PATH),
+        "{path} --width 0 --format png --quality 35 - -".format(path=WK_PATH),
         input=input,
         shell=True,
         stdout=subprocess.PIPE,
