@@ -57,8 +57,8 @@ class SlackBot(SlackClient):
 
     def _messageEventToCommand(self, event):
         for trigger in self._triggers.keys():
-            if event['text'].startswith(trigger):
-                args = event['text'][len(trigger):].strip().split()
+            if event['text'].lower().startswith(trigger.lower()):
+                args = event['text'][len(trigger):].strip().lower().split()
                 return Command(
                     trigger,
                     args,
