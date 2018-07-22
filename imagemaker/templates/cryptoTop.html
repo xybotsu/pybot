@@ -3,8 +3,34 @@
 <head>
     <link rel="stylesheet" href="https://unpkg.com/purecss@1.0.0/build/pure-min.css" integrity="sha384-nn4HPE8lTHyVtfCBi5yW9d20FjT8BJwUXyWZT9InLYax14RDjBj46LmSztkmNP9w"
         crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Overpass+Mono" rel="stylesheet">
+
 
     <style>
+        * {
+            font-family: 'Overpass Mono', monospace;
+        }
+
+        table {
+            table-layout: fixed;
+        }
+
+        td,
+        th {
+            width: 1px;
+            white-space: nowrap;
+        }
+
+        td,
+        th {
+            text-align: right;
+        }
+
+        td.left,
+        th.left {
+            text-align: left;
+        }
+
         .red {
             color: red;
         }
@@ -20,28 +46,26 @@
     <table class="pure-table pure-table-horizontal">
         <thead>
             <tr>
-                <th>Coin</th>
-                <th>Rank</th>
-                <th>Vol (24h)</th>
-                <th>Price</th>
-                <th>Mkt Cap</th>
-                <th>% Chg 1h</th>
-                <th>% Chg 24h</th>
-                <th>% Chg 7d</th>
+                <th class="left">Coin</th>
+                <th>Price $</th>
+                <th>Vol 24h</th>
+                <th>MCap $</th>
+                <th>% &#916; 1h</th>
+                <th>% &#916; 24h</th>
+                <th>% &#916; 7d</th>
             </tr>
         </thead>
 
         <tbody>
             {% for row in rows %}
             <tr>
-                <td>{{ row[0] }}</td>
+                <td class="left">{{ row[0] }}</td>
                 <td>{{ row[1] }}</td>
                 <td>{{ row[2] }}</td>
                 <td>{{ row[3] }}</td>
-                <td>{{ row[4] }}</td>
-                <td>{{ row[5] }}</td>
-                <td>{{ row[6] }}</td>
-                <td>{{ row[7] }}</td>
+                <td {% if row[4]>= 0 %} class="green" {% else %} class="red" {% endif %}>{{ row[4] }}</td>
+                <td {% if row[5]>= 0 %} class="green" {% else %} class="red" {% endif %}>{{ row[5] }}</td>
+                <td {% if row[6]>= 0 %} class="green" {% else %} class="red" {% endif %}>{{ row[6] }}</td>
             </tr>
             {% endfor %}
         </tbody>

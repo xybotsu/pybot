@@ -131,13 +131,12 @@ class CryptoTrader:
             rows.append(
                 (
                     ticker.symbol,
-                    ticker.rank,
-                    _format_suffix(ticker.quotes['USD'].volume_24h),
                     _format_money(ticker.quotes['USD'].price),
+                    _format_suffix(ticker.quotes['USD'].volume_24h),
                     _format_suffix(ticker.quotes['USD'].market_cap),
-                    _format_pct(ticker.quotes['USD'].percent_change_1h),
-                    _format_pct(ticker.quotes['USD'].percent_change_24h),
-                    _format_pct(ticker.quotes['USD'].percent_change_7d)
+                    ticker.quotes['USD'].percent_change_1h,
+                    ticker.quotes['USD'].percent_change_24h,
+                    ticker.quotes['USD'].percent_change_7d
                 )
             )
 
@@ -166,7 +165,12 @@ class CryptoTrader:
                     user.display_portfolio(),
                     _format_money(user.value(prices)),
                     _format_money(user.balance),
-                    _format_money(user.balance + user.value(prices))
+                    _format_money(user.balance + user.value(prices)),
+                    (
+                        (user.balance + user.value(prices)) -
+                        CryptoTrader.INITIAL_POT_SIZE
+
+                    )
                 )
             )
 
@@ -186,7 +190,7 @@ class InsufficientCoinsError(Error):
 
 
 def _format_money(n: float) -> str:
-    return "${0:.1f}".format(n)
+    return "{0:.1f}".format(n)
 
 
 def _format_pct(n: float) -> str:
