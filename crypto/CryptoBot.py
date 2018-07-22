@@ -4,7 +4,7 @@ from .CryptoTrader import (
     InsufficientCoinsError
 )
 from bot.Bot import Bot, Command, SlackBot
-from typing import List
+from typing import List, Union
 
 
 class CryptoBot(SlackBot):
@@ -17,16 +17,16 @@ class CryptoBot(SlackBot):
     ) -> None:
         super().__init__(token, bot, None)
         self.trader = trader
-        self.fileUploads: List[str] = []
+        self.lastLeaderboard: Union[str, None] = None
+        self.lastTopCoins: Union[str, None] = None
 
-    def deleteFileUploads(self):
+    def deleteFileUploads(self, file):
         try:
-            for file in self.fileUploads:
-                result = self.api_call(
-                    'files.delete',
-                    file=file
-                )
-                print(result)
+            result = self.api_call(
+                'files.delete',
+                file=file
+            )
+            print(result)
             self.fileUploads = []
         except:
             print("failed to delete files in deleteFileUploads()")
@@ -138,15 +138,17 @@ class CryptoBot(SlackBot):
             cmd.thread
         )
         png = self.trader.leaderboard()
-        self.deleteFileUploads()
         try:
+            if self.lastLeaderboard:
+                self.api_call('files.delete', file=self.lastLeaderboard)
+                self.lastLeaderboard = None
             response = self.api_call(
                 'files.upload',
                 channels=[channel],
                 filename='leaderboard.png',
                 file=png
             )
-            self.fileUploads.append(response['file']['id'])
+            self.lastLeaderboard = response['file']['id']
         except:
             self.postMessage(
                 channel,
@@ -174,14 +176,17 @@ class CryptoBot(SlackBot):
             numCoins = int(args[0]) if args else 10
             numCoins = numCoins if numCoins <= 25 else 25
             png = self.trader.topCoins(numCoins)
-            self.deleteFileUploads()
+
+            if self.lastTopCoins:
+                self.api_call('files.delete', file=self.lastTopCoins)
+                self.lastTopCoins = None
             response = self.api_call(
                 'files.upload',
                 channels=[channel],
                 filename='top coins.png',
                 file=png
             )
-            self.fileUploads.append(response['file']['id'])
+            self.lastTopCoins = response['file']['id']
         except:
             self.postMessage
             (
