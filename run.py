@@ -7,6 +7,7 @@ from bot.redis import redis
 from slackclient import SlackClient
 from crypto.CryptoTrader import CryptoTrader
 from crypto.CryptoBot import CryptoBot
+from arbitrage.ArbitrageBot import ArbitrageBot
 from multiprocessing import Process
 import http.server
 import socketserver
@@ -53,6 +54,16 @@ if __name__ == '__main__':
         crypto.register('crypto top', crypto.onTopCoins, allMessageEvents)
         crypto.register('crypto help', crypto.onHelp, allMessageEvents)
 
+        # arbitrage bot
+        arbitrage = ArbitrageBot(
+            SLACK_TOKEN,
+            Bot(
+                'cryptodamus',
+                ':crystal_ball:'
+            )
+        )
+        arbitrage.register('crypto hax', arbitrage.onPredict, allMessageEvents)
+
         # serve images out of img dir
         os.chdir('img')
         Handler = http.server.SimpleHTTPRequestHandler
@@ -61,6 +72,7 @@ if __name__ == '__main__':
         # start listening in parallel
         Process(target=chess.listen).start()
         Process(target=crypto.listen).start()
+        Process(target=arbitrage.listen).start()
         Process(target=httpd.serve_forever).start()
 
     except Exception as e:  # die on any other error
