@@ -60,7 +60,8 @@ if __name__ == '__main__':
             Bot(
                 'cryptodamus',
                 ':crystal_ball:'
-            )
+            ),
+            redis
         )
         arbitrage.register('crypto hax', arbitrage.onPredict, allMessageEvents)
 
