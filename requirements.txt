@@ -10,3 +10,4 @@ pylint==2.0.0
 dataclasses==0.6
 psycopg2-binary==2.7.5
 Jinja2==2.10
+pytz==2018.5
