@@ -57,6 +57,9 @@ class ArbitrageBot(SlackBot):
             cmcPrice, cmcUpdateTime = _pollCmc()
             cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
 
+            # Update bot price just in case, this should not be necessary
+            self.botPrice = self._pollCryptoBot(channel, thread)[0]
+
             prediction = None
             if self.botPrice < cmcPrice:
                 prediction = "go up"
@@ -81,8 +84,7 @@ class ArbitrageBot(SlackBot):
             print("BOT = {}, CMC = {}, Next bot update in {}".format(self.botPrice, cmcPrice, nextBotUpdateSec))
 
             # force cache update so we can track price
-            # shouldn't need it, but add a few seconds of padding just in case
-            _sleep_until(self.nextBotUpdateTime + 3)
+            _sleep_until(self.nextBotUpdateTime + 1)
             self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
 
             # debug info
@@ -107,7 +109,7 @@ class ArbitrageBot(SlackBot):
             # {'text': '```btc: 8205.06```', 'username': 'cryptobot', 'icons': {'emoji': ':doge:'},
             # 'bot_id': 'BBPBDQN2D', 'type': 'message', 'subtype': 'bot_message', 'team': 'T0339440S',
             # 'channel': 'DBPQ0H3H9', 'event_ts': '1532846653.000009', 'ts': '1532846653.000009'}
-            timeout = time.time() + 5
+            timeout = time.time() + 10
             while True:
                 events = list(filter(lambda e:
                     e.get('type') == 'message' and
@@ -123,7 +125,7 @@ class ArbitrageBot(SlackBot):
                     print("hax timed out waiting for {} reply!".format(ArbitrageBot.BOT_NAME))
                     self.postMessage(errChannel, "hax timed out waiting for {} reply :sob:".format(
                         ArbitrageBot.BOT_NAME), errThread)
-                    return [0, 0]
+                    return [self.botPrice, self.nextBotUpdateTime + ArbitrageBot.BOT_REFRESH_TIME]
                 time.sleep(0.1)
 
 def _mono(str):
