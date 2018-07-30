@@ -9,6 +9,7 @@ import re
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
     CMC_REFRESH_TIME = 1.75 * 60 # CoinMarketCap refreshes every 2-5 min, best to be conservative
+    HAX_THRESHOLD = 10 # Only post when profit is more than $10 per btc
     HAX_TIME = 30 * 60 # Do hax for 30 min at a time
     HAX_BUFFER = 30 # Do checks 30 sec before CryptoBot refresh
     BOT_NAME = "cryptobot"
@@ -16,7 +17,6 @@ class ArbitrageBot(SlackBot):
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
-        self.haxUntil = 0
 
     def onPredict(self, cmd: Command):
         # "crypto hax"
@@ -57,20 +57,19 @@ class ArbitrageBot(SlackBot):
             cmcPrice, cmcUpdateTime = _pollCmc()
             cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
 
-            # Update bot price just in case, this should not be necessary
-            self.botPrice = self._pollCryptoBot(channel, thread)[0]
-
             prediction = None
             if self.botPrice < cmcPrice:
                 prediction = "go up"
             elif self.botPrice > cmcPrice:
                 prediction = "drop"
 
+            priceDiff = abs(cmcPrice-self.botPrice)
+            winning = prediction is not None and not cmcPriceVolatile and priceDiff >= ArbitrageBot.HAX_THRESHOLD
+
             # Should be ~= ArbitrageBot.HAX_BUFFER
             nextBotUpdateSec = round(self.nextBotUpdateTime - time.time())
 
-            if prediction is not None and not cmcPriceVolatile:
-                priceDiff = abs(cmcPrice-self.botPrice)
+            if winning:
                 gainz += priceDiff
                 opportunities += 1
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
@@ -81,7 +80,9 @@ class ArbitrageBot(SlackBot):
             # debug info
             if cmcPriceVolatile:
                 print("No hax, CMC price may change at any second...")
-            print("BOT = {}, CMC = {}, Next bot update in {}".format(self.botPrice, cmcPrice, nextBotUpdateSec))
+            cmcUpdateAge = time.time() - cmcUpdateTime
+            print("BOT = {}, CMC = {}, Next bot update in {}, last CMC update {:0.2f} sec ago".format(
+                self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
 
             # force cache update so we can track price
             _sleep_until(self.nextBotUpdateTime + 1)
@@ -89,11 +90,13 @@ class ArbitrageBot(SlackBot):
 
             # debug info
             cmcPrice, cmcUpdateTime = _pollCmc()
+            cmcUpdateAge = time.time() - cmcUpdateTime
             nextBotUpdateSec = round(self.nextBotUpdateTime - time.time())
-            print("BOT = {}, CMC = {}, Next bot update in {}".format(self.botPrice, cmcPrice, nextBotUpdateSec))
+            print("BOT = {}, CMC = {}, Next bot update in {}, last CMC update {:0.2f} sec ago".format(
+                self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
             print("Gainz = {:0.2f}, Opps = {}".format(gainz, opportunities))
 
-            if prediction is not None and not cmcPriceVolatile:
+            if winning:
                 self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
 
     def _pollCryptoBot(self, errChannel, errThread):
@@ -140,7 +143,7 @@ def _sleep_until(timestamp):
         time.sleep(timestamp - t)
 
 def _pollCmc():
-    resp = get('https://api.coinmarketcap.com/v2/ticker/?limit=1').json()
-    cmcPrice = resp['data']['1']['quotes']['USD']['price']
-    cmcUpdateTime = resp['data']['1']['last_updated']
+    resp = get('https://api.coinmarketcap.com/v2/ticker/1/').json()
+    cmcPrice = resp['data']['quotes']['USD']['price']
+    cmcUpdateTime = resp['data']['last_updated']
     return [cmcPrice, cmcUpdateTime]
