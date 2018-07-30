@@ -143,7 +143,8 @@ def _sleep_until(timestamp):
         time.sleep(timestamp - t)
 
 def _pollCmc():
-    resp = get('https://api.coinmarketcap.com/v2/ticker/1/').json()
-    cmcPrice = resp['data']['quotes']['USD']['price']
-    cmcUpdateTime = resp['data']['last_updated']
+    # use exact same query as cryptobot otherwise prices may be different
+    resp = get('https://api.coinmarketcap.com/v2/ticker/?limit=100&sort=rank&structure=array').json()
+    cmcPrice = resp['data'][0]['quotes']['USD']['price']
+    cmcUpdateTime = resp['data'][0]['last_updated']
     return [cmcPrice, cmcUpdateTime]
