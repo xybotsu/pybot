@@ -25,7 +25,7 @@ class ArbitrageBot(SlackBot):
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
         self.postMessage(channel, "Cryptodamus will check for arbitrage opportunities `{} sec`"
                                   " before each {} update until `{}`\n"
-                                  "Only works if nobody has checked prices in last {} min.".format(
+                                  "cyrptobot price timing requires that prices have not been checked in the last {} min.".format(
                                       ArbitrageBot.HAX_BUFFER,
                                       ArbitrageBot.BOT_NAME,
                                       _get_time_str(self.haxUntil),
@@ -36,10 +36,15 @@ class ArbitrageBot(SlackBot):
         self._doHax(channel, thread)
 
     def _doHax(self, channel, thread):
+        gainz = 0
+        opportunities = 0
         while True:
             if time.time() > self.haxUntil:
-                self.postMessage(channel, "Done checking for hax. Run again at `{}` to continue haxing.".format(
-                    _get_time_str(self.nextBotUpdateTime)), thread)
+                self.postMessage(channel, "Done checking for hax.\n"
+                                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.\n"
+                                          "Run again at `{}` to continue haxing.".format(
+                                              gainz, opportunities,
+                                              _get_time_str(self.nextBotUpdateTime)), thread)
                 print("done checking for hax.")
                 break
 
@@ -49,9 +54,7 @@ class ArbitrageBot(SlackBot):
             print("checking for hax...")
 
             # Get data from CoinMarketCap API
-            resp = get('https://api.coinmarketcap.com/v2/ticker/?limit=1').json()
-            cmcPrice = resp['data']['1']['quotes']['USD']['price']
-            cmcUpdateTime = resp['data']['1']['last_updated']
+            cmcPrice, cmcUpdateTime = _pollCmc()
             cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
 
             prediction = None
@@ -65,21 +68,28 @@ class ArbitrageBot(SlackBot):
 
             if prediction is not None and not cmcPriceVolatile:
                 priceDiff = abs(cmcPrice-self.botPrice)
+                gainz += priceDiff
+                opportunities += 1
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
                 self.postMessage(channel, "Cryptodamus predicts\n"
                                             "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {} seconds.```".format(
                                                 prediction, priceDiff, self.botPrice, cmcPrice, nextBotUpdateSec), thread)
 
             # debug info
+            if cmcPriceVolatile:
+                print("No hax, CMC price may change at any second...")
             print("BOT = {}, CMC = {}, Next bot update in {}".format(self.botPrice, cmcPrice, nextBotUpdateSec))
 
             # force cache update so we can track price
-            _sleep_until(self.nextBotUpdateTime)
+            # shouldn't need it, but add a few seconds of padding just in case
+            _sleep_until(self.nextBotUpdateTime + 3)
             self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
 
             # debug info
+            cmcPrice, cmcUpdateTime = _pollCmc()
             nextBotUpdateSec = round(self.nextBotUpdateTime - time.time())
             print("BOT = {}, CMC = {}, Next bot update in {}".format(self.botPrice, cmcPrice, nextBotUpdateSec))
+            print("Gainz = {:0.2f}, Opps = {}".format(gainz, opportunities))
 
             if prediction is not None and not cmcPriceVolatile:
                 self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
@@ -126,3 +136,9 @@ def _sleep_until(timestamp):
     t = time.time()
     if timestamp > t:
         time.sleep(timestamp - t)
+
+def _pollCmc():
+    resp = get('https://api.coinmarketcap.com/v2/ticker/?limit=1').json()
+    cmcPrice = resp['data']['1']['quotes']['USD']['price']
+    cmcUpdateTime = resp['data']['1']['last_updated']
+    return [cmcPrice, cmcUpdateTime]
