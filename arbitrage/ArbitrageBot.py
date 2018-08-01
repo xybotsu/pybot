@@ -5,6 +5,7 @@ from datetime import datetime
 from pytz import timezone, utc
 import time
 import re
+import os
 
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
@@ -52,7 +53,7 @@ class ArbitrageBot(SlackBot):
             # Get data from CoinMarketCap API
             cmcPrice, cmcUpdateTime = _pollCmc()
             cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
-            #cmcAdvice = "go for it" if not cmcPriceVolatile else "use caution"
+            cmcAdvice = " (use caution)" if cmcPriceVolatile else ""
             cmcUpdateAge = time.time() - cmcUpdateTime
 
             prediction = None
@@ -63,6 +64,8 @@ class ArbitrageBot(SlackBot):
 
             priceDiff = abs(cmcPrice-self.botPrice)
             winning = prediction is not None and priceDiff >= ArbitrageBot.HAX_THRESHOLD
+            buyThenSell = winning and not cmcPriceVolatile and self.botPrice < cmcPrice
+            sellThenBuy = winning and not cmcPriceVolatile and self.botPrice > cmcPrice
 
             # Should be ~= ArbitrageBot.HAX_BUFFER
             nextBotUpdateSec = self.nextBotUpdateTime - time.time()
@@ -73,13 +76,17 @@ class ArbitrageBot(SlackBot):
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
                 self.postMessage(channel, "Cryptodamus predicts\n"
                                             "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:.0f} seconds."
-                                            " CMC price is {:.0f} seconds old```".format(
+                                            " CMC price is {:.0f} seconds old{}.```".format(
                                                 prediction, priceDiff, self.botPrice, cmcPrice,
-                                                nextBotUpdateSec, cmcUpdateAge), thread)
+                                                nextBotUpdateSec, cmcUpdateAge, cmcAdvice), thread)
+
+            # make gainz
+            if buyThenSell:
+                self._kaha_msg(channel, thread, "crypto buy btc 1")
+            elif sellThenBuy:
+                self._kaha_msg(channel, thread, "crypto sell btc 1")
 
             # debug info
-            if cmcPriceVolatile:
-                print("No hax, CMC price may change at any second...")
             cmcUpdateAge = time.time() - cmcUpdateTime
             print("BOT = {}, CMC = {}, Next bot update in {:.0f}, last CMC update {:.0f} sec ago".format(
                 self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
@@ -98,6 +105,12 @@ class ArbitrageBot(SlackBot):
 
             if winning:
                 self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
+
+            # make gainz
+            if buyThenSell:
+                self._kaha_msg(channel, thread, "crypto sell btc 1")
+            elif sellThenBuy:
+                self._kaha_msg(channel, thread, "crypto buy btc 1")
 
     def _pollCryptoBot(self, errChannel, errThread):
             # Message cryptobot to get latest BTC price
@@ -131,6 +144,16 @@ class ArbitrageBot(SlackBot):
                     return [self.botPrice, self.nextBotUpdateTime + ArbitrageBot.BOT_REFRESH_TIME]
                 time.sleep(0.1)
 
+    def _kaha_msg(self, channel, thread, msg):
+        self.api_call(
+            "chat.postMessage",
+            token=os.getenv('KAHA_TOKEN')
+            channel=channel,
+            text=msg,
+            thread_ts=thread,
+            as_user="true"
+        )
+
 def _mono(str):
     return "```{str}```".format(str=str)
 
@@ -148,3 +171,4 @@ def _pollCmc():
     cmcPrice = resp['data'][0]['quotes']['USD']['price']
     cmcUpdateTime = resp['data'][0]['last_updated']
     return [cmcPrice, cmcUpdateTime]
+    
