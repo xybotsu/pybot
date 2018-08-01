@@ -9,11 +9,11 @@ import re
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
     CMC_REFRESH_TIME = 1.75 * 60 # CoinMarketCap refreshes every 2-5 min, best to be conservative
-    HAX_THRESHOLD = 10 # Only post when profit is more than $10 per btc
+    HAX_THRESHOLD = 5 # Only post when profit is more than $5 per btc
     HAX_TIME = 30 * 60 # Do hax for 30 min at a time
     HAX_BUFFER = 30 # Do checks 30 sec before CryptoBot refresh
     BOT_NAME = "cryptobot"
-    BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
+    BOT_CHANNEL = "DBPQ0H3H9" #"GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
@@ -24,12 +24,10 @@ class ArbitrageBot(SlackBot):
         self.haxUntil = time.time() + ArbitrageBot.HAX_TIME
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
         self.postMessage(channel, "Cryptodamus will check for arbitrage opportunities `{} sec`"
-                                  " before each {} update until `{}`\n"
-                                  "cyrptobot price timing requires that prices have not been checked in the last {} min.".format(
+                                  " before each {} update until `{}`".format(
                                       ArbitrageBot.HAX_BUFFER,
                                       ArbitrageBot.BOT_NAME,
-                                      _get_time_str(self.haxUntil),
-                                      round(ArbitrageBot.BOT_REFRESH_TIME/60) ), thread)
+                                      _get_time_str(self.haxUntil)), thread)
         # Poll cryptobot for latest BTC price
         # This should start the cache timer assuming nobody has requested prices in the last 5 min
         self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
@@ -41,10 +39,8 @@ class ArbitrageBot(SlackBot):
         while True:
             if time.time() > self.haxUntil:
                 self.postMessage(channel, "Done checking for hax.\n"
-                                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.\n"
-                                          "Run again at `{}` to continue haxing.".format(
-                                              gainz, opportunities,
-                                              _get_time_str(self.nextBotUpdateTime)), thread)
+                                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.".format(
+                                              gainz, opportunities), thread)
                 print("done checking for hax.")
                 break
 
@@ -56,6 +52,8 @@ class ArbitrageBot(SlackBot):
             # Get data from CoinMarketCap API
             cmcPrice, cmcUpdateTime = _pollCmc()
             cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
+            #cmcAdvice = "go for it" if not cmcPriceVolatile else "use caution"
+            cmcUpdateAge = time.time() - cmcUpdateTime
 
             prediction = None
             if self.botPrice < cmcPrice:
@@ -64,24 +62,26 @@ class ArbitrageBot(SlackBot):
                 prediction = "drop"
 
             priceDiff = abs(cmcPrice-self.botPrice)
-            winning = prediction is not None and not cmcPriceVolatile and priceDiff >= ArbitrageBot.HAX_THRESHOLD
+            winning = prediction is not None and priceDiff >= ArbitrageBot.HAX_THRESHOLD
 
             # Should be ~= ArbitrageBot.HAX_BUFFER
-            nextBotUpdateSec = round(self.nextBotUpdateTime - time.time())
+            nextBotUpdateSec = self.nextBotUpdateTime - time.time()
 
             if winning:
                 gainz += priceDiff
                 opportunities += 1
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
                 self.postMessage(channel, "Cryptodamus predicts\n"
-                                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {} seconds.```".format(
-                                                prediction, priceDiff, self.botPrice, cmcPrice, nextBotUpdateSec), thread)
+                                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:d} seconds."
+                                            " CMC price is {:d} seconds old```".format(
+                                                prediction, priceDiff, self.botPrice, cmcPrice,
+                                                nextBotUpdateSec, cmcUpdateAge), thread)
 
             # debug info
             if cmcPriceVolatile:
                 print("No hax, CMC price may change at any second...")
             cmcUpdateAge = time.time() - cmcUpdateTime
-            print("BOT = {}, CMC = {}, Next bot update in {}, last CMC update {:0.2f} sec ago".format(
+            print("BOT = {}, CMC = {}, Next bot update in {:d}, last CMC update {:d} sec ago".format(
                 self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
 
             # force cache update so we can track price
