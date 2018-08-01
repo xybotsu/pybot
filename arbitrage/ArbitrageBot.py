@@ -13,7 +13,7 @@ class ArbitrageBot(SlackBot):
     HAX_TIME = 30 * 60 # Do hax for 30 min at a time
     HAX_BUFFER = 30 # Do checks 30 sec before CryptoBot refresh
     BOT_NAME = "cryptobot"
-    BOT_CHANNEL = "DBPQ0H3H9" #"GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
+    BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
