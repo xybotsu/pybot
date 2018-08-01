@@ -147,7 +147,7 @@ class ArbitrageBot(SlackBot):
     def _kaha_msg(self, channel, thread, msg):
         self.api_call(
             "chat.postMessage",
-            token=os.getenv('KAHA_TOKEN')
+            token=os.getenv('KAHA_TOKEN'),
             channel=channel,
             text=msg,
             thread_ts=thread,
