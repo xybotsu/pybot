@@ -72,8 +72,8 @@ class ArbitrageBot(SlackBot):
                 opportunities += 1
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
                 self.postMessage(channel, "Cryptodamus predicts\n"
-                                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:d} seconds."
-                                            " CMC price is {:d} seconds old```".format(
+                                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:.0f} seconds."
+                                            " CMC price is {:.0f} seconds old```".format(
                                                 prediction, priceDiff, self.botPrice, cmcPrice,
                                                 nextBotUpdateSec, cmcUpdateAge), thread)
 
@@ -81,7 +81,7 @@ class ArbitrageBot(SlackBot):
             if cmcPriceVolatile:
                 print("No hax, CMC price may change at any second...")
             cmcUpdateAge = time.time() - cmcUpdateTime
-            print("BOT = {}, CMC = {}, Next bot update in {:d}, last CMC update {:d} sec ago".format(
+            print("BOT = {}, CMC = {}, Next bot update in {:.0f}, last CMC update {:.0f} sec ago".format(
                 self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
 
             # force cache update so we can track price
