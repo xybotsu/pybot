@@ -82,9 +82,9 @@ class ArbitrageBot(SlackBot):
 
             # make gainz
             if buyThenSell:
-                self._kaha_msg(channel, thread, "crypto buy btc 1")
+                self._kaha_msg(channel, thread, "crypto buy btc 6")
             elif sellThenBuy:
-                self._kaha_msg(channel, thread, "crypto sell btc 1")
+                self._kaha_msg(channel, thread, "crypto sell btc 6")
 
             # debug info
             cmcUpdateAge = time.time() - cmcUpdateTime
@@ -108,9 +108,9 @@ class ArbitrageBot(SlackBot):
 
             # make gainz
             if buyThenSell:
-                self._kaha_msg(channel, thread, "crypto sell btc 1")
+                self._kaha_msg(channel, thread, "crypto sell btc 6")
             elif sellThenBuy:
-                self._kaha_msg(channel, thread, "crypto buy btc 1")
+                self._kaha_msg(channel, thread, "crypto buy btc 6")
 
     def _pollCryptoBot(self, errChannel, errThread):
             # Message cryptobot to get latest BTC price
