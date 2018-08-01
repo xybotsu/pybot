@@ -10,8 +10,8 @@ import os
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
     CMC_REFRESH_TIME = 1.75 * 60 # CoinMarketCap refreshes every 2-5 min, best to be conservative
-    HAX_THRESHOLD = 5 # Only post when profit is more than $5 per btc
-    HAX_TIME = 30 * 60 # Do hax for 30 min at a time
+    HAX_THRESHOLD = 3 # Only post when profit is more than $3 per btc
+    HAX_TIME = 6 * 60 * 60 # Do hax for 6 hours at a time
     HAX_BUFFER = 30 # Do checks 30 sec before CryptoBot refresh
     BOT_NAME = "cryptobot"
     BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
@@ -24,11 +24,11 @@ class ArbitrageBot(SlackBot):
         channel, thread = cmd.channel, cmd.thread
         self.haxUntil = time.time() + ArbitrageBot.HAX_TIME
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
-        self.postMessage(channel, "Cryptodamus will check for arbitrage opportunities `{} sec`"
-                                  " before each {} update until `{}`".format(
-                                      ArbitrageBot.HAX_BUFFER,
-                                      ArbitrageBot.BOT_NAME,
-                                      _get_time_str(self.haxUntil)), thread)
+        #self.postMessage(channel, "Cryptodamus will check for arbitrage opportunities `{} sec`"
+        #                          " before each {} update until `{}`".format(
+        #                              ArbitrageBot.HAX_BUFFER,
+        #                              ArbitrageBot.BOT_NAME,
+        #                              _get_time_str(self.haxUntil)), thread)
         # Poll cryptobot for latest BTC price
         # This should start the cache timer assuming nobody has requested prices in the last 5 min
         self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
@@ -39,9 +39,10 @@ class ArbitrageBot(SlackBot):
         opportunities = 0
         while True:
             if time.time() > self.haxUntil:
-                self.postMessage(channel, "Done checking for hax.\n"
-                                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.".format(
-                                              gainz, opportunities), thread)
+                #self.postMessage(channel, "Done checking for hax.\n"
+                #                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.".format(
+                #                              gainz, opportunities), thread)
+                self._kaha_msg(channel, thread, "Haxed ${:0.2f} over {} trades.".format(gainz, opportunities))
                 print("done checking for hax.")
                 break
 
@@ -74,11 +75,11 @@ class ArbitrageBot(SlackBot):
                 gainz += priceDiff
                 opportunities += 1
                 print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
-                self.postMessage(channel, "Cryptodamus predicts\n"
-                                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:.0f} seconds."
-                                            " CMC price is {:.0f} seconds old{}.```".format(
-                                                prediction, priceDiff, self.botPrice, cmcPrice,
-                                                nextBotUpdateSec, cmcUpdateAge, cmcAdvice), thread)
+                #self.postMessage(channel, "Cryptodamus predicts\n"
+                #                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:.0f} seconds."
+                #                            " CMC price is {:.0f} seconds old{}.```".format(
+                #                                prediction, priceDiff, self.botPrice, cmcPrice,
+                #                                nextBotUpdateSec, cmcUpdateAge, cmcAdvice), thread)
 
             # make gainz
             if buyThenSell:
@@ -103,8 +104,8 @@ class ArbitrageBot(SlackBot):
                 self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
             print("Gainz = {:0.2f}, Opps = {}".format(gainz, opportunities))
 
-            if winning:
-                self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
+            #if winning:
+            #    self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
 
             # make gainz
             if buyThenSell:
