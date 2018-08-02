@@ -70,6 +70,16 @@ class CryptoTrader:
         ticker = ticker.lower()
 
         if (
+            ticker == 'KICK' and
+            user.portfolio[ticker] >= quantity
+        ):
+            sellPrice = 0.123731 * quantity
+            user.portfolio[ticker] -= quantity
+            user.balance += sellPrice
+            self._setUser(user)
+            return
+
+        if (
             user.portfolio.get(ticker) and
             user.portfolio[ticker] >= quantity
         ):
