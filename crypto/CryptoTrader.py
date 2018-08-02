@@ -69,6 +69,9 @@ class CryptoTrader:
         prices = self.api.getPrices()
         ticker = ticker.lower()
 
+        print(ticker)
+        print(user.portfolio[ticker])
+        print(quantity)
         if (
             ticker == 'KICK' and
             user.portfolio[ticker] >= quantity
