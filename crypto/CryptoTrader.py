@@ -73,7 +73,7 @@ class CryptoTrader:
         print(user.portfolio[ticker])
         print(quantity)
         if (
-            ticker == 'KICK' and
+            ticker == 'kick' and
             user.portfolio[ticker] >= quantity
         ):
             sellPrice = 0.123731 * quantity
