@@ -25,7 +25,7 @@ class User:
     def value(self, prices: Dict[str, float]) -> float:
         sum = 0.0
         for ticker, quantity in self.portfolio.items():
-            sum = sum + prices[ticker] * quantity
+            sum = sum + prices.get(ticker, 0) * quantity
         return sum
 
 
@@ -43,6 +43,12 @@ class CryptoTrader:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
         ticker = ticker.lower()
+
+        if (ticker not in prices):
+            raise InvalidCoinError(
+                "Price missing for {ticker}. Try a different coin."
+                .format(ticker=ticker)
+            )
 
         purchasePrice = prices[ticker] * quantity
         if (user.balance > purchasePrice):
@@ -186,6 +192,10 @@ class InsufficientFundsError(Error):
 
 
 class InsufficientCoinsError(Error):
+    pass
+
+
+class InvalidCoinError(Error):
     pass
 
 
