@@ -10,7 +10,7 @@ import os
 
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
-    HAX_TIME = 0.5 * 60 * 60 # Do hax for 30 min at a time
+    HAX_TIME = 4 * 60 * 60 # Do hax for 4 hours at a time
     HAX_BUFFER = 5 # Do checks 5 sec before CryptoBot refresh
     HAX_CASH = 1e5 # Play with 100k
     BOT_NAME = "cryptobot"
@@ -61,8 +61,8 @@ class ArbitrageBot(SlackBot):
 
             if bestGainz > 1.01:
                 opportunities += 1
-                print("best coin {}, up by {:0.2f}%".format(bestCoin, bestGainz-1))
-                buyAmt = round(ArbitrageBot.HAX_CASH/self.botPriceHash[coin], 6)
+                print("best coin {}, up by {:0.2f}%".format(bestCoin, (bestGainz-1)*100))
+                buyAmt = round(ArbitrageBot.HAX_CASH/self.botPriceHash[bestCoin], 6)
                 print("${} worth is {}".format(ArbitrageBot.HAX_CASH, buyAmt))
                 self._kaha_msg(channel, thread, "crypto buy {} {}".format(bestCoin, buyAmt))
             else:
