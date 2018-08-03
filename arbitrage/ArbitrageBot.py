@@ -26,7 +26,7 @@ class ArbitrageBot(SlackBot):
         args, channel, thread = cmd.args, cmd.channel, cmd.thread
         if cmd.username.lower() != "kaha":
             self.postMessage(channel, "Sorry bruv, I only hax for the crypto king.", thread)
-            print "only kaha has the power to hax"
+            print("only kaha has the power to hax")
             return
         self.haxUntil = time.time() + ArbitrageBot.HAX_TIME
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
