@@ -1,6 +1,7 @@
 from bot.Bot import Bot, Command, SlackBot
 from redis import StrictRedis
 from requests import get
+from collections import namedtuple
 from datetime import datetime
 from pytz import timezone, utc
 import time
@@ -9,40 +10,32 @@ import os
 
 class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
-    CMC_REFRESH_TIME = 1.75 * 60 # CoinMarketCap refreshes every 2-5 min, best to be conservative
-    HAX_THRESHOLD = 3 # Only post when profit is more than $3 per btc
-    HAX_TIME = 6 * 60 * 60 # Do hax for 6 hours at a time
-    HAX_BUFFER = 30 # Do checks 30 sec before CryptoBot refresh
+    HAX_TIME = 0.5 * 60 * 60 # Do hax for 30 min at a time
+    HAX_BUFFER = 5 # Do checks 5 sec before CryptoBot refresh
+    HAX_CASH = 1e4 # Play with 10k
     BOT_NAME = "cryptobot"
-    BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
+    BOT_CHANNEL = "DBPQ0H3H9" #"GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
+        self.coinList = list(_pollCmc())
 
     def onPredict(self, cmd: Command):
         # "crypto hax"
         channel, thread = cmd.channel, cmd.thread
         self.haxUntil = time.time() + ArbitrageBot.HAX_TIME
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
-        #self.postMessage(channel, "Cryptodamus will check for arbitrage opportunities `{} sec`"
-        #                          " before each {} update until `{}`".format(
-        #                              ArbitrageBot.HAX_BUFFER,
-        #                              ArbitrageBot.BOT_NAME,
-        #                              _get_time_str(self.haxUntil)), thread)
         # Poll cryptobot for latest BTC price
         # This should start the cache timer assuming nobody has requested prices in the last 5 min
-        self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
+        self.botPriceHash, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread, self.coinList)
         self._doHax(channel, thread)
 
     def _doHax(self, channel, thread):
-        gainz = 0
+        totalGainz = 0
         opportunities = 0
         while True:
             if time.time() > self.haxUntil:
-                #self.postMessage(channel, "Done checking for hax.\n"
-                #                          "Hax potential was `${:0.2f}` per BTC over `{}` opportunities.".format(
-                #                              gainz, opportunities), thread)
-                self._kaha_msg(channel, thread, "Haxed ${:0.2f} over {} trades.".format(gainz, opportunities))
+                self._kaha_msg(channel, thread, "Haxed ${:0.2f} over {} trades.".format(totalGainz, opportunities))
                 print("done checking for hax.")
                 break
 
@@ -52,73 +45,41 @@ class ArbitrageBot(SlackBot):
             print("checking for hax...")
 
             # Get data from CoinMarketCap API
-            cmcPrice, cmcUpdateTime = _pollCmc()
-            cmcPriceVolatile = self.nextBotUpdateTime - cmcUpdateTime > ArbitrageBot.CMC_REFRESH_TIME
-            cmcAdvice = " (use caution)" if cmcPriceVolatile else ""
-            cmcUpdateAge = time.time() - cmcUpdateTime
+            coinDict = _pollCmc()
+            self.coinList = list(coinDict.keys())
 
-            prediction = None
-            if self.botPrice < cmcPrice:
-                prediction = "go up"
-            elif self.botPrice > cmcPrice:
-                prediction = "drop"
+            bestGainz = 1
+            for coin in self.coinList:
+                if coinDict[coin].rank >= 90:
+                    continue
+                gainz = coinDict[coin].price/self.botPriceHash[coin]
+                if gainz > bestGainz:
+                    bestGainz = gainz
+                    bestCoin = coin
 
-            priceDiff = abs(cmcPrice-self.botPrice)
-            winning = prediction is not None and priceDiff >= ArbitrageBot.HAX_THRESHOLD
-            buyThenSell = winning and not cmcPriceVolatile and self.botPrice < cmcPrice
-            sellThenBuy = winning and not cmcPriceVolatile and self.botPrice > cmcPrice
-
-            # Should be ~= ArbitrageBot.HAX_BUFFER
-            nextBotUpdateSec = self.nextBotUpdateTime - time.time()
-
-            if winning:
-                gainz += priceDiff
+            if bestGainz > 1.01:
                 opportunities += 1
-                print("Price should {} by {:0.2f}...".format(prediction, priceDiff))
-                #self.postMessage(channel, "Cryptodamus predicts\n"
-                #                            "```BTC price will {} by ${:0.2f} ({:0.2f} -> {:0.2f}) in {:.0f} seconds."
-                #                            " CMC price is {:.0f} seconds old{}.```".format(
-                #                                prediction, priceDiff, self.botPrice, cmcPrice,
-                #                                nextBotUpdateSec, cmcUpdateAge, cmcAdvice), thread)
-
-            # make gainz
-            if buyThenSell:
-                self._kaha_msg(channel, thread, "crypto buy btc 6")
-            elif sellThenBuy:
-                self._kaha_msg(channel, thread, "crypto sell btc 6")
-
-            # debug info
-            cmcUpdateAge = time.time() - cmcUpdateTime
-            print("BOT = {}, CMC = {}, Next bot update in {:.0f}, last CMC update {:.0f} sec ago".format(
-                self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
+                print("best coin {}, up by {:0.2f}%".format(bestCoin, bestGainz-1))
+                buyAmt = round(ArbitrageBot.HAX_CASH/self.botPriceHash[coin], 6)
+                print("${} worth is {}".format(ArbitrageBot.HAX_CASH, buyAmt))
+            else:
+                print("no hax this round.")
 
             # force cache update so we can track price
             _sleep_until(self.nextBotUpdateTime + 1)
-            self.botPrice, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread)
+            self.botPriceHash, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread, self.coinList)
 
-            # debug info
-            cmcPrice, cmcUpdateTime = _pollCmc()
-            cmcUpdateAge = time.time() - cmcUpdateTime
-            nextBotUpdateSec = round(self.nextBotUpdateTime - time.time())
-            print("BOT = {}, CMC = {}, Next bot update in {}, last CMC update {:0.2f} sec ago".format(
-                self.botPrice, cmcPrice, nextBotUpdateSec, cmcUpdateAge))
-            print("Gainz = {:0.2f}, Opps = {}".format(gainz, opportunities))
+            if bestGainz > 1.01:
+                profit = buyAmt * self.botPriceHash[bestCoin] - ArbitrageBot.HAX_CASH
+                totalGainz += profit
+                print("Profit would be ${:0.2f}".format(profit))
 
-            #if winning:
-            #    self.postMessage(channel, "{} price is now `${:0.2f}`".format(ArbitrageBot.BOT_NAME, self.botPrice), thread)
-
-            # make gainz
-            if buyThenSell:
-                self._kaha_msg(channel, thread, "crypto sell btc 6")
-            elif sellThenBuy:
-                self._kaha_msg(channel, thread, "crypto buy btc 6")
-
-    def _pollCryptoBot(self, errChannel, errThread):
-            # Message cryptobot to get latest BTC price
+    def _pollCryptoBot(self, errChannel, errThread, coinList):
+            # Message cryptobot to get latest coin prices
             self.api_call(
                 "chat.postMessage",
                 channel=ArbitrageBot.BOT_CHANNEL,
-                text="crypto price btc",
+                text="crypto price {}".format(' '.join(coinList)),
                 thread_ts=None,
                 as_user="true"
             )
@@ -134,15 +95,18 @@ class ArbitrageBot(SlackBot):
                     e.get('username') == ArbitrageBot.BOT_NAME,
                 self.rtm_read()))
                 if len(events) > 0:
-                    m = re.search('[0-9.]+', events[0].get('text'))
-                    botPrice = float(m.group(0))
+                    botPriceHash = {}
+                    prices = events[0].get('text').replace("`","")
+                    for coinAndPrice in prices.split(", "):
+                        coin, price = coinAndPrice.split(": ")
+                        botPriceHash[coin.lower()] = float(price)
                     nextBotUpdateTime = time.time() + ArbitrageBot.BOT_REFRESH_TIME
-                    return [botPrice, nextBotUpdateTime]
+                    return [botPriceHash, nextBotUpdateTime]
                 if time.time() > timeout:
                     print("hax timed out waiting for {} reply!".format(ArbitrageBot.BOT_NAME))
                     self.postMessage(errChannel, "hax timed out waiting for {} reply :sob:".format(
                         ArbitrageBot.BOT_NAME), errThread)
-                    return [self.botPrice, self.nextBotUpdateTime + ArbitrageBot.BOT_REFRESH_TIME]
+                    return [self.botPriceHash, self.nextBotUpdateTime + ArbitrageBot.BOT_REFRESH_TIME]
                 time.sleep(0.1)
 
     def _kaha_msg(self, channel, thread, msg):
@@ -169,7 +133,12 @@ def _sleep_until(timestamp):
 def _pollCmc():
     # use exact same query as cryptobot otherwise prices may be different
     resp = get('https://api.coinmarketcap.com/v2/ticker/?limit=100&sort=rank&structure=array').json()
-    cmcPrice = resp['data'][0]['quotes']['USD']['price']
-    cmcUpdateTime = resp['data'][0]['last_updated']
-    return [cmcPrice, cmcUpdateTime]
-    
+    coinDict = {}
+    coinInfo = namedtuple('coinInfo', 'price updateTime rank')
+    for coin in resp['data']:
+        name = coin['symbol'].lower()
+        price = coin['quotes']['USD']['price']
+        rank = coin['rank']
+        updateTime = coin['last_updated']
+        coinDict[name] = coinInfo(price, updateTime, rank)
+    return coinDict
