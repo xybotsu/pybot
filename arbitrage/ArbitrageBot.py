@@ -24,7 +24,7 @@ class ArbitrageBot(SlackBot):
     def onPredict(self, cmd: Command):
         # "crypto hax 1e5"
         args, channel, thread = cmd.args, cmd.channel, cmd.thread
-        if cmd.username.lower() != "kaha":
+        if cmd.user.lower() != "kaha":
             self.postMessage(channel, "Sorry bruv, I only hax for the crypto king.", thread)
             print("only kaha has the power to hax")
             return
