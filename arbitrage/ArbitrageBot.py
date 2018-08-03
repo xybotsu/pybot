@@ -62,6 +62,7 @@ class ArbitrageBot(SlackBot):
                 print("best coin {}, up by {:0.2f}%".format(bestCoin, bestGainz-1))
                 buyAmt = round(ArbitrageBot.HAX_CASH/self.botPriceHash[coin], 6)
                 print("${} worth is {}".format(ArbitrageBot.HAX_CASH, buyAmt))
+                self._kaha_msg(channel, thread, "crypto buy {} {}".format(bestCoin, buyAmt))
             else:
                 print("no hax this round.")
 
@@ -72,7 +73,8 @@ class ArbitrageBot(SlackBot):
             if bestGainz > 1.01:
                 profit = buyAmt * self.botPriceHash[bestCoin] - ArbitrageBot.HAX_CASH
                 totalGainz += profit
-                print("Profit would be ${:0.2f}".format(profit))
+                self._kaha_msg(channel, thread, "crypto sell {} {}".format(bestCoin, buyAmt))
+                print("Profit of ${:0.2f}".format(profit))
 
     def _pollCryptoBot(self, errChannel, errThread, coinList):
             # Message cryptobot to get latest coin prices
