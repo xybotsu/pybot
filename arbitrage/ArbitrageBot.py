@@ -100,7 +100,7 @@ class ArbitrageBot(SlackBot):
                     botPriceHash = {}
                     prices = events[0].get('text').replace("`","")
                     for coinAndPrice in prices.split(", "):
-                        m = re.search('([a-zA-Z0-0]+): ([0-9.]+)', coinAndPrice)
+                        m = re.search('([a-zA-Z0-9]+): ([0-9.]+)', coinAndPrice)
                         coin = m.group(1).lower()
                         price = float(m.group(2))
                         botPriceHash[coin] = price
