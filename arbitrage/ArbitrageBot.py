@@ -14,7 +14,7 @@ class ArbitrageBot(SlackBot):
     HAX_BUFFER = 5 # Do checks 5 sec before CryptoBot refresh
     HAX_CASH = 1e5 # Play with 100k
     BOT_NAME = "cryptobot"
-    BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
+    BOT_CHANNEL = "DBPQ0H3H9" #"GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
@@ -50,6 +50,8 @@ class ArbitrageBot(SlackBot):
 
             bestGainz = 1
             for coin in self.coinList:
+                if not coin in coinDict or not coin in self.botPriceHash:
+                    continue
                 if coinDict[coin].rank >= 90:
                     continue
                 gainz = coinDict[coin].price/self.botPriceHash[coin]
@@ -100,10 +102,15 @@ class ArbitrageBot(SlackBot):
                     botPriceHash = {}
                     prices = events[0].get('text').replace("`","")
                     for coinAndPrice in prices.split(", "):
-                        m = re.search('([a-zA-Z0-9]+): ([0-9.]+)', coinAndPrice)
-                        coin = m.group(1).lower()
-                        price = float(m.group(2))
-                        botPriceHash[coin] = price
+                        # dash price comes out as a telephone number for some reason, skip it for now
+                        # dash: <tel:206.3474357|206.3474357>
+                        try:
+                            m = re.search('([a-zA-Z0-9]+): ([0-9.]+)', coinAndPrice)
+                            coin = m.group(1).lower()
+                            price = float(m.group(2))
+                            botPriceHash[coin] = price
+                        except:
+                            print("failed to parse {}".format(coinAndPrice))
                     nextBotUpdateTime = time.time() + ArbitrageBot.BOT_REFRESH_TIME
                     return [botPriceHash, nextBotUpdateTime]
                 if time.time() > timeout:
@@ -140,9 +147,12 @@ def _pollCmc():
     coinDict = {}
     coinInfo = namedtuple('coinInfo', 'price updateTime rank')
     for coin in resp['data']:
-        name = coin['symbol'].lower()
-        price = coin['quotes']['USD']['price']
-        rank = coin['rank']
-        updateTime = coin['last_updated']
-        coinDict[name] = coinInfo(price, updateTime, rank)
+        try:
+            name = coin['symbol'].lower()
+            price = coin['quotes']['USD']['price']
+            rank = coin['rank']
+            updateTime = coin['last_updated']
+            coinDict[name] = coinInfo(price, updateTime, rank)
+        except:
+            print("failed to parse {}".format(str(coin)))
     return coinDict
