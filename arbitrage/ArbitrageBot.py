@@ -18,16 +18,26 @@ class ArbitrageBot(SlackBot):
 
     def __init__(self, token, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token, bot, db)
+        self.hax_cash = ArbitrageBot.HAX_CASH
         self.coinList = list(_pollCmc())
 
     def onPredict(self, cmd: Command):
-        # "crypto hax"
-        channel, thread = cmd.channel, cmd.thread
+        # "crypto hax 1e5"
+        args, channel, thread = cmd.args, cmd.channel, cmd.thread
+        if cmd.username.lower() != "kaha":
+            self.postMessage(channel, "Sorry bruv, I only hax for the crypto king.", thread)
+            print "only kaha has the power to hax"
+            return
         self.haxUntil = time.time() + ArbitrageBot.HAX_TIME
         print("checking for hax until {}".format(_get_time_str(self.haxUntil)))
         # Poll cryptobot for latest BTC price
         # This should start the cache timer assuming nobody has requested prices in the last 5 min
         self.botPriceHash, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread, self.coinList)
+        if args[0] is not None:
+            try:
+                self.hax_cash = float(args[0])
+            except:
+                print("failed to parse args, hax cash = ${:0.2f}".format(ArbitrageBot.HAX_CASH))
         self._doHax(channel, thread)
 
     def _doHax(self, channel, thread):
@@ -62,8 +72,8 @@ class ArbitrageBot(SlackBot):
             if bestGainz > 1.01:
                 opportunities += 1
                 print("best coin {}, up by {:0.2f}%".format(bestCoin, (bestGainz-1)*100))
-                buyAmt = round(ArbitrageBot.HAX_CASH/self.botPriceHash[bestCoin], 6)
-                print("${} worth is {}".format(ArbitrageBot.HAX_CASH, buyAmt))
+                buyAmt = round(self.hax_cash/self.botPriceHash[bestCoin], 6)
+                print("${} worth is {}".format(self.hax_cash, buyAmt))
                 self._kaha_msg(channel, thread, "crypto buy {} {}".format(bestCoin, buyAmt))
             else:
                 print("no hax this round.")
@@ -73,8 +83,9 @@ class ArbitrageBot(SlackBot):
             self.botPriceHash, self.nextBotUpdateTime = self._pollCryptoBot(channel, thread, self.coinList)
 
             if bestGainz > 1.01:
-                profit = buyAmt * self.botPriceHash[bestCoin] - ArbitrageBot.HAX_CASH
+                profit = buyAmt * self.botPriceHash[bestCoin] - self.hax_cash
                 totalGainz += profit
+                self.hax_cash = buyAmt * self.botPriceHash[bestCoin]
                 self._kaha_msg(channel, thread, "crypto sell {} {}".format(bestCoin, buyAmt))
                 print("Profit of ${:0.2f}".format(profit))
 
