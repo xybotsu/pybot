@@ -12,7 +12,7 @@ class ArbitrageBot(SlackBot):
     BOT_REFRESH_TIME = 5 * 60 # CyrptoBot refreshes every 5 min
     HAX_TIME = 0.5 * 60 * 60 # Do hax for 30 min at a time
     HAX_BUFFER = 5 # Do checks 5 sec before CryptoBot refresh
-    HAX_CASH = 1e4 # Play with 10k
+    HAX_CASH = 1e5 # Play with 100k
     BOT_NAME = "cryptobot"
     BOT_CHANNEL = "GBYUB4398" # Channel for arbitragebot to ask cryptobot for latest BTC price
 
@@ -100,7 +100,7 @@ class ArbitrageBot(SlackBot):
                     botPriceHash = {}
                     prices = events[0].get('text').replace("`","")
                     for coinAndPrice in prices.split(", "):
-                        m = re.search('([a-zA-Z0-0]): ([0-9.]+)', coinAndPrice)
+                        m = re.search('([a-zA-Z0-0]+): ([0-9.]+)', coinAndPrice)
                         coin = m.group(1).lower()
                         price = float(m.group(2))
                         botPriceHash[coin] = price
