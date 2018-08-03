@@ -100,8 +100,10 @@ class ArbitrageBot(SlackBot):
                     botPriceHash = {}
                     prices = events[0].get('text').replace("`","")
                     for coinAndPrice in prices.split(", "):
-                        coin, price = coinAndPrice.split(": ")
-                        botPriceHash[coin.lower()] = float(price)
+                        m = re.search('([a-zA-Z0-0]): ([0-9.]+)', coinAndPrice)
+                        coin = m.group(1).lower()
+                        price = float(m.group(2))
+                        botPriceHash[coin] = price
                     nextBotUpdateTime = time.time() + ArbitrageBot.BOT_REFRESH_TIME
                     return [botPriceHash, nextBotUpdateTime]
                 if time.time() > timeout:
