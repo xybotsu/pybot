@@ -18,6 +18,7 @@ class Meta:
     timestamp: int
     num_cryptocurrencies: int
     error: str
+    warning: str
 
 
 @dataclass(frozen=True)
@@ -63,6 +64,7 @@ class Ticker:
 
 @dataclass(frozen=True)
 class Tickers:
+    attention: str
     data: List[Ticker]
     metadata: Meta
 
@@ -73,8 +75,8 @@ class TickersDecoder(FastJsonDecoder):
             ('id', 'name', 'symbol', 'website_slug', 'rank',
                 'circulating_supply', 'total_supply', 'max_supply',
                 'quotes', 'last_updated'): Ticker,
-            ('timestamp', 'num_cryptocurrencies', 'error'): Meta,
-            ('data', 'metadata'): Tickers,
+            ('timestamp', 'num_cryptocurrencies', 'error', 'warning'): Meta,
+            ('attention', 'data', 'metadata'): Tickers,
             ('price', 'volume_24h', 'market_cap', 'percent_change_1h',
                 'percent_change_24h', 'percent_change_7d'): Quote
         }
