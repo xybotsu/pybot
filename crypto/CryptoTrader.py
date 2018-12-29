@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import pickle
 from typing import Dict, List
-from .CoinMarketCap import CachedGet, CoinMarketCapApi, Ticker
+from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
@@ -130,19 +130,19 @@ class CryptoTrader:
         )
 
     def topCoins(self, n: int) -> str:
-        topTickers = self.api.getTopNTickersAndPrices(n)
+        topListings = self.api.getTopNListings(n)
 
         rows = []
-        for ticker in topTickers:
+        for listing in topListings:
             rows.append(
                 (
-                    ticker.symbol,
-                    _format_money(ticker.quotes['USD'].price),
-                    _format_suffix(ticker.quotes['USD'].volume_24h),
-                    _format_suffix(ticker.quotes['USD'].market_cap),
-                    ticker.quotes['USD'].percent_change_1h,
-                    ticker.quotes['USD'].percent_change_24h,
-                    ticker.quotes['USD'].percent_change_7d
+                    listing.symbol,
+                    _format_money(listing.quote['USD'].price),
+                    _format_suffix(listing.quote['USD'].volume_24h),
+                    _format_suffix(listing.quote['USD'].market_cap),
+                    listing.quote['USD'].percent_change_1h,
+                    listing.quote['USD'].percent_change_24h,
+                    listing.quote['USD'].percent_change_7d
                 )
             )
 

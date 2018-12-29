@@ -1,8 +1,15 @@
-from requests import get, Response
+from requests import request, Response
 from json import loads, JSONDecoder
-from .models import Listings, ListingsDecoder, Ticker, Tickers, TickersDecoder
+from .models import Listings, Listing, ListingsDecoder
 from typing import Dict, List, Tuple
+import os
 import time
+
+CMC_API_KEY = os.getenv('CMC_API_KEY', '')
+if CMC_API_KEY == '':
+    raise TypeError(
+        "\n[ERROR] please add CMC_API_KEY (CoinMarketCap API Key) to your ENV"
+    )
 
 
 def current_time_ms() -> int:
@@ -30,10 +37,16 @@ class CachedGet:
 
         return isNotInCache or isStaleInCache
 
-    def get(self, url: str) -> Response:
+    def request(
+        self,
+        method: str,
+        url: str,
+        headers: Dict[str, str],
+        params: Dict[str, str]
+    ) -> Response:
         if self._needsCacheRefresh(url):
             print("cache stale; fetching {url}".format(url=url))
-            resp = get(url)
+            resp = request(method, url, headers=headers, params=params)
             self.total_api_calls = self.total_api_calls + 1
             print("{n} api calls made".format(n=self.total_api_calls))
             self.cache[url] = (resp, current_time_ms())
@@ -45,36 +58,37 @@ class CachedGet:
 
 class CoinMarketCapApi:
 
-    URL = 'https://api.coinmarketcap.com/v2/{resource}'
-    REFRESH_TIME_MS = 5 * 60 * 1000  # data refreshes every 5 min
+    URL = 'https://pro-api.coinmarketcap.com/v1/{resource}'
+    REFRESH_TIME_MS = 1 * 60 * 1000  # data refreshes every 1 min
 
     def __init__(self) -> None:
         self.getter = CachedGet(CoinMarketCapApi.REFRESH_TIME_MS)
 
     def getListings(self) -> Listings:
-        resp = self.getter.get(
-            CoinMarketCapApi.URL.format(resource='listings')
+        resp = self.getter.request(
+            'get',
+            CoinMarketCapApi.URL.format(
+                resource='cryptocurrency/listings/latest'),
+            {
+                "X-CMC_PRO_API_KEY": CMC_API_KEY,
+            },
+            {
+                "limit": "200",
+                "cryptocurrency_type": "coins"
+            }
         )
         return loads(resp.text, cls=ListingsDecoder)
 
-    def getTickers(self) -> Tickers:
-        resp = self.getter.get(
-            CoinMarketCapApi.URL.format(
-                resource='ticker/?limit=100&sort=rank&structure=array'
-            )
-        )
-        return loads(resp.text, cls=TickersDecoder)
-
     def getPrices(self) -> Dict[str, float]:
         return {
-            ticker.symbol.lower(): ticker.quotes['USD'].price
-            for ticker in self.getTickers().data
+            listing.symbol.lower(): listing.quote['USD'].price
+            for listing in self.getListings().data
         }
 
-    def getTopNTickersAndPrices(self, n: int) -> List[Ticker]:
-        tickers = self.getTickers().data
-        sortedTickers = sorted(
-            tickers,
-            key=lambda t: t.rank
+    def getTopNListings(self, n: int) -> List[Listing]:
+        listings = self.getListings().data
+        sortedListings = sorted(
+            listings,
+            key=lambda l: l.cmc_rank
         )[0:n]
-        return sortedTickers
+        return sortedListings
