@@ -55,15 +55,15 @@ if __name__ == '__main__':
         crypto.register('crypto help', crypto.onHelp, allMessageEvents)
 
         # arbitrage bot
-        arbitrage = ArbitrageBot(
-            SLACK_TOKEN,
-            Bot(
-                'cryptodamus',
-                ':crystal_ball:'
-            ),
-            redis
-        )
-        arbitrage.register('crypto hax', arbitrage.onPredict, allMessageEvents)
+        # arbitrage = ArbitrageBot(
+        #     SLACK_TOKEN,
+        #     Bot(
+        #         'cryptodamus',
+        #         ':crystal_ball:'
+        #     ),
+        #     redis
+        # )
+        # arbitrage.register('crypto hax', arbitrage.onPredict, allMessageEvents)
 
         # serve images out of img dir
         os.chdir('img')
