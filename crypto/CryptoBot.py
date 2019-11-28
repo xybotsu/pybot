@@ -63,7 +63,7 @@ class CryptoBot(SlackBot):
         except:
             self.postMessage(
                 channel,
-                "`crypto createuser <username> <initial_balance>`",
+                "Maybe you meant `crypto createuser <username>`?",
                 thread
             )
             return
