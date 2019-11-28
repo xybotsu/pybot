@@ -53,6 +53,7 @@ if __name__ == '__main__':
                         crypto.onLeaderboard, allMessageEvents)
         crypto.register('crypto top', crypto.onTopCoins, allMessageEvents)
         crypto.register('crypto help', crypto.onHelp, allMessageEvents)
+        crypto.register('crypto newuser', crypto.onNewUser, allMessageEvents)
 
         # arbitrage bot
         # arbitrage = ArbitrageBot(
@@ -73,7 +74,7 @@ if __name__ == '__main__':
         # start listening in parallel
         Process(target=chess.listen).start()
         Process(target=crypto.listen).start()
-        Process(target=arbitrage.listen).start()
+        # Process(target=arbitrage.listen).start()
         Process(target=httpd.serve_forever).start()
 
     except Exception as e:  # die on any other error

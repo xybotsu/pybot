@@ -50,6 +50,27 @@ class CryptoBot(SlackBot):
             thread
         )
 
+    def onNewUser(self, cmd: Command):
+        # crypto newuser chwang 0
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        try:
+            new_user_name = args[0].lower()
+        except:
+            self.postMessage(
+                channel,
+                "`crypto createuser <username> <initial_balance>`",
+                thread
+            )
+            return
+        # create user here...
+        self.trader.create_user(new_user_name)
+        self.onLeaderboard(cmd)
+
     def onBuy(self, cmd: Command):
         # crypto buy eth 200
         user_name, args, channel, thread = (
