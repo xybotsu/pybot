@@ -51,7 +51,7 @@ class CryptoBot(SlackBot):
         )
 
     def onNewUser(self, cmd: Command):
-        # crypto newuser chwang 0
+        # crypto newuser chwang
         user_name, args, channel, thread = (
             cmd.user_name,
             cmd.args,
