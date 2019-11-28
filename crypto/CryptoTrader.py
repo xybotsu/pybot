@@ -116,12 +116,12 @@ class CryptoTrader:
     def _setUser(self, user: User) -> None:
         self.db.set(self._key(user.user_name), pickle.dumps(user))
 
-    def create_user(self, user_name, initial_balance=CryptoTrader.INITIAL_POT_SIZE):
+    def create_user(self, user_name):
         if not self.db.get(self._key(user_name)):
             self._setUser(
                 User(
                     user_name,
-                    initial_balance,
+                    0,
                     {}
                 )
             )
