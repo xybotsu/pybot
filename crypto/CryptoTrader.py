@@ -121,7 +121,7 @@ class CryptoTrader:
             self._setUser(
                 User(
                     user_name,
-                    0,
+                    100000,
                     {}
                 )
             )
