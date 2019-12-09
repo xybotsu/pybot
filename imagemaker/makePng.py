@@ -54,7 +54,6 @@ def generate_png(html: str):
     p = execute_wk(html.encode())
     png_content = p.stdout
     if p.returncode != 0:
-        print(p.stdout)
         print(p.stderr)
         raise RuntimeError('error running wkhtmltoimage, command')
     return png_content
