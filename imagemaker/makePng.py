@@ -51,6 +51,7 @@ def execute_wk(input):
 
 
 def generate_png(html: str):
+    print(html.encode())
     p = execute_wk(html.encode())
     png_content = p.stdout
     if p.returncode != 0:
