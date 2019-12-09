@@ -1,9 +1,5 @@
-import os, logging
+from pythonping import ping
+import os
 
 hostname = os.environ['PING_URL']
-response = os.system("ping -c 1 " + hostname)
-
-if response == 0:
-  logger.info('Ping!')
-else:
-  logger.warning('Could not ping server')
+response = ping(hostname, count=1, timeout=5, verbose=True)
