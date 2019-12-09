@@ -79,7 +79,8 @@ if __name__ == '__main__':
         Handler = http.server.SimpleHTTPRequestHandler
         httpd = socketserver.TCPServer(("", 8000), Handler)
 
-        server = http.server.HTTPServer(('', os.environ['PORT']), MyServer)
+        server = http.server.HTTPServer(
+            ('', int(os.environ['PORT'])), MyServer)
 
         # start listening in parallel
         Process(target=chess.listen).start()
