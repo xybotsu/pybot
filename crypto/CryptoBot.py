@@ -6,7 +6,6 @@ from .CryptoTrader import (
 from bot.Bot import Bot, Command, SlackBot
 from typing import List, Union
 
-
 class CryptoBot(SlackBot):
 
     def __init__(

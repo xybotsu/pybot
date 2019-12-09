@@ -14,6 +14,14 @@ import socketserver
 import os
 
 
+class MyServer(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        return
+
+
 if __name__ == '__main__':
     try:
         chess = ChessBot(
@@ -71,11 +79,14 @@ if __name__ == '__main__':
         Handler = http.server.SimpleHTTPRequestHandler
         httpd = socketserver.TCPServer(("", 8000), Handler)
 
+        server = http.server.HTTPServer(('', 80), MyServer)
+
         # start listening in parallel
         Process(target=chess.listen).start()
         Process(target=crypto.listen).start()
         # Process(target=arbitrage.listen).start()
         Process(target=httpd.serve_forever).start()
+        Process(target=server.serve_forever).start()
 
     except Exception as e:  # die on any other error
         logging.exception('Error bubbled up to main loop')
