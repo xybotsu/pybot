@@ -40,7 +40,9 @@ class CryptoBot(SlackBot):
                 "crypto top",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
-                "crypto price <ticker>"
+                "crypto price <ticker>",
+                "crypto play",
+                "crypto quit"
             ]
         )
         self.postMessage(
@@ -49,25 +51,36 @@ class CryptoBot(SlackBot):
             thread
         )
 
+    def onPing(self, cmd: Command):
+        channel, thread = cmd.channel, cmd.thread
+        self.postMessage(
+            channel,
+            'pong!',
+            thread
+        )
+
     def onNewUser(self, cmd: Command):
-        # crypto newuser chwang
+        # crypto play
         user_name, args, channel, thread = (
             cmd.user_name,
             cmd.args,
             cmd.channel,
             cmd.thread
         )
-        try:
-            new_user_name = args[0].lower()
-        except:
-            self.postMessage(
-                channel,
-                "Maybe you meant `crypto createuser <username>`?",
-                thread
-            )
-            return
         # create user here...
-        self.trader.create_user(new_user_name)
+        self.trader.create_user(user_name)
+        self.onLeaderboard(cmd)
+
+    def onUserQuit(self, cmd: Command):
+        # crypto quit
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        # delete user here...
+        self.trader.delete_user(user_name)
         self.onLeaderboard(cmd)
 
     def onBuy(self, cmd: Command):

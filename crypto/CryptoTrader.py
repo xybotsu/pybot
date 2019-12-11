@@ -126,6 +126,10 @@ class CryptoTrader:
                 )
             )
 
+    def delete_user(self, user_name):
+        if self.db.get(self._key(user_name)):
+            self.db.delete(self._key(user_name))
+
     def status(self, user_name: str) -> str:
         user = self._getUser(user_name)
         return (
