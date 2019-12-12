@@ -47,13 +47,18 @@ class SlackBot(SlackClient):
     def listen(self):
         # listens for commands, and process them in turn
         while True:
-            events = filter(lambda e: e.get('type') ==
-                            'message' and 'text' in e, self.rtm_read())
-            for event in events:
-                command = self._messageEventToCommand(event)
-                if command:
-                    self.notify(command)  # notifies all listeners
-            time.sleep(0.5)
+            try:
+                events = filter(lambda e: e.get('type') ==
+                                'message' and 'text' in e, self.rtm_read())
+                for event in events:
+                    command = self._messageEventToCommand(event)
+                    if command:
+                        self.notify(command)  # notifies all listeners
+                time.sleep(0.5)
+            except Exception as e:
+                print(e)
+                print("Websocket error. Reconnecting!")
+                self.rtm_connect()
 
     def _messageEventToCommand(self, event):
         for trigger in self._triggers.keys():
