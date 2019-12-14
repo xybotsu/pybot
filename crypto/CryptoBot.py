@@ -23,9 +23,8 @@ class CryptoBot(SlackBot):
         self.runMaintenance(5 * 60)
 
     def runMaintenance(self, interval: float) -> None:
-        # TODO: fix; this does not typecheck
-        self.runMaintenance(interval, runMaintenance).start()
         self.trader.checkStops()
+        Timer(interval, self.runMaintenance, [interval]).start()
 
     def deleteFileUploads(self, file):
         try:
