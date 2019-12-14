@@ -1,28 +1,28 @@
 from dataclasses import dataclass
 import pickle
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
 
+Stop = Tuple[str, float, float]
+
 
 @dataclass
 class User:
     user_name: str
     balance: float
-    portfolio: Dict[str, float] # ticker, qty
-    stops: Dict[str, [str, float, float]] # stopID, [ticker, qty, stopPrice]
-    #offers: Dict[str, [str, float, float, int]] # offerID, [ticker, qty, interest, date_ms]
-    #contracts: Dict[str, [str, str, float, float, int]] # contractID, [user, ticker, qty, interest, date_ms]
+    portfolio: Dict[str, float]  # ticker, qty
+    stops: Dict[str, Stop]  # stopID, [ticker, qty, stopPrice]
 
-    def getStop(self) -> [str, float, float]:
+    def getStop(self, stopID: str) -> Stop:
         stop = self.stops[stopID]
         ticker = stop[0]
         qty = stop[1]
         price = stop[2]
-        return {ticker:ticker, qty:qty, price:price}
+        return (ticker, qty, price)
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with 0 value
@@ -60,11 +60,9 @@ class CryptoTrader:
                 .format(ticker=ticker)
             )
 
-        if (
-            user.portfolio.get(ticker) and
-            user.portfolio[ticker] >= quantity
-        ):
+        if user.portfolio.get(ticker) and user.portfolio[ticker] >= quantity:
             # TODO
+            print("do something")
         else:
             raise InsufficientCoinsError(
                 "{user_name} don't have {coin} coins to sell!"
@@ -76,17 +74,19 @@ class CryptoTrader:
             user.stops.delete(stopID)
         return user
 
-    def updateStop(self, user_name: str, stopID: str, quantity: float, price: float) -> None:
+    def updateStop(self, user_name: str, stop: Stop) -> User:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
-        stop = user.getStop(stopID)
-        ticker = stop.ticker.lower()
+        # TODO: where does stopID come from here?
+        (ticker, qty, stopPrice) = user.getStop(stopID)
+        ticker = ticker.lower()
 
         if (
             user.portfolio.get(ticker) and
-            user.portfolio[ticker] >= quantity
+            user.portfolio[ticker] >= qty
         ):
             # TODO
+            print("do something")
         else:
             raise InsufficientCoinsError(
                 "{user_name} don't have {coin} coins to sell!"
@@ -94,19 +94,20 @@ class CryptoTrader:
             )
         return user
 
-
-    def checkStops(self) -> [[str,float,float]]:
-        sales = []
-        for user in self._getAllUsers:
+    def checkStops(self) -> List[Stop]:
+        sales: List = []
+        for user in self._getAllUsers():
             user_name = user.user_name
-            for stopID, [ticker, qty, stopPrice] in user.stops:
-                if stopPrice <= prices[ticker]:
-                    self.deleteStop(stopID)
-                    self.sell(user_name, ticker, qty)
-                    sales.push([user_name,ticker,qty])
+            for stopID, (ticker, qty, stopPrice) in user.stops.items():
+                price = self.api.getPrices().get(ticker)
+                if price is None:
+                    raise Error("price not found for {}".format(ticker))
+                elif stopPrice <= price:
+                    self.deleteStop(user, stopID)
+                    # self.sell(user_name, ticker, qty)
+                    sales.append((user_name, ticker, qty))
         # ideally, bot should whisper user saying stop was executed
         return sales
-
 
     def buy(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
@@ -164,6 +165,7 @@ class CryptoTrader:
                 User(
                     user_name,
                     CryptoTrader.INITIAL_POT_SIZE,
+                    {},
                     {}
                 )
             )
@@ -183,16 +185,17 @@ class CryptoTrader:
         ]
 
     def _setUser(self, user: User) -> None:
-        user = self.validateUser(user)
+        user = self._validateUser(user)
         self.db.set(self._key(user.user_name), pickle.dumps(user))
 
     def _validateUser(self, user: User) -> User:
-        for stopID, [ticker, qty, stopPrice] in user.stops:
+        for stopID, (ticker, qty, stopPrice) in user.stops.items():
             if qty > user.portfolio[ticker]:
                 if user.portfolio[ticker] == 0:
-                    user = self.deleteStop(stopID)
+                    user = self.deleteStop(user, stopID)
                 else:
-                    user = self.updateStop(stopID, ticker, user.portfolio[ticker], stopPrice)
+                    user = self.updateStop(
+                        stopID, (ticker, user.portfolio[ticker], stopPrice))
         return user
 
     def create_user(self, user_name):
