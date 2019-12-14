@@ -12,7 +12,17 @@ from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
 class User:
     user_name: str
     balance: float
-    portfolio: Dict[str, float]
+    portfolio: Dict[str, float] # ticker, qty
+    stops: Dict[str, [str, float, float]] # stopID, [ticker, qty, stopPrice]
+    #offers: Dict[str, [str, float, float, int]] # offerID, [ticker, qty, interest, date_ms]
+    #contracts: Dict[str, [str, str, float, float, int]] # contractID, [user, ticker, qty, interest, date_ms]
+
+    def getStop(self) -> [str, float, float]:
+        stop = self.stops[stopID]
+        ticker = stop[0]
+        qty = stop[1]
+        price = stop[2]
+        return {ticker:ticker, qty:qty, price:price}
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with 0 value
@@ -38,6 +48,65 @@ class CryptoTrader:
         self.group = group
         self.api = CoinMarketCapApi()
         pass
+
+    def addStop(self, user_name: str, ticker: str, quantity: float, price: float) -> None:
+        user = self._getUser(user_name)
+        prices = self.api.getPrices()
+        ticker = ticker.lower()
+
+        if (ticker not in prices):
+            raise InvalidCoinError(
+                "Price missing for {ticker}. Try a different coin."
+                .format(ticker=ticker)
+            )
+
+        if (
+            user.portfolio.get(ticker) and
+            user.portfolio[ticker] >= quantity
+        ):
+            # TODO
+        else:
+            raise InsufficientCoinsError(
+                "{user_name} don't have {coin} coins to sell!"
+                .format(user_name=user_name, coin=ticker)
+            )
+
+    def deleteStop(self, user, stopID):
+        if(user.stops[stopID]):
+            user.stops.delete(stopID)
+        return user
+
+    def updateStop(self, user_name: str, stopID: str, quantity: float, price: float) -> None:
+        user = self._getUser(user_name)
+        prices = self.api.getPrices()
+        stop = user.getStop(stopID)
+        ticker = stop.ticker.lower()
+
+        if (
+            user.portfolio.get(ticker) and
+            user.portfolio[ticker] >= quantity
+        ):
+            # TODO
+        else:
+            raise InsufficientCoinsError(
+                "{user_name} don't have {coin} coins to sell!"
+                .format(user_name=user_name, coin=ticker)
+            )
+        return user
+
+
+    def checkStops(self) -> [[str,float,float]]:
+        sales = []
+        for user in self._getAllUsers:
+            user_name = user.user_name
+            for stopID, [ticker, qty, stopPrice] in user.stops:
+                if stopPrice <= prices[ticker]:
+                    self.deleteStop(stopID)
+                    self.sell(user_name, ticker, qty)
+                    sales.push([user_name,ticker,qty])
+        # ideally, bot should whisper user saying stop was executed
+        return sales
+
 
     def buy(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
@@ -114,7 +183,17 @@ class CryptoTrader:
         ]
 
     def _setUser(self, user: User) -> None:
+        user = self.validateUser(user)
         self.db.set(self._key(user.user_name), pickle.dumps(user))
+
+    def _validateUser(self, user: User) -> User:
+        for stopID, [ticker, qty, stopPrice] in user.stops:
+            if qty > user.portfolio[ticker]:
+                if user.portfolio[ticker] == 0:
+                    user = self.deleteStop(stopID)
+                else:
+                    user = self.updateStop(stopID, ticker, user.portfolio[ticker], stopPrice)
+        return user
 
     def create_user(self, user_name):
         if not self.db.get(self._key(user_name)):
