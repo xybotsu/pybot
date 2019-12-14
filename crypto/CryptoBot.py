@@ -7,6 +7,7 @@ from bot.Bot import Bot, Command, SlackBot
 from typing import List, Union
 from threading import Timer
 
+
 class CryptoBot(SlackBot):
 
     def __init__(
@@ -19,9 +20,10 @@ class CryptoBot(SlackBot):
         self.trader = trader
         self.lastLeaderboard: Union[str, None] = None
         self.lastTopCoins: Union[str, None] = None
-        self.runMaintenance(5*60)
+        self.runMaintenance(5 * 60)
 
-    def runMaintenance(self, double: interval) -> None:
+    def runMaintenance(self, interval: float) -> None:
+        # TODO: fix; this does not typecheck
         self.runMaintenance(interval, runMaintenance).start()
         self.trader.checkStops()
 
@@ -90,13 +92,16 @@ class CryptoBot(SlackBot):
         self.onLeaderboard(cmd)
 
     def onGetStops(self, cmd: Command):
-        # TODO
+        pass  # TODO
+
     def onSetStop(self, cmd: Command):
-        # TODO
+        pass  # TODO
+
     def onUpdateStop(self, cmd: Command):
-        # TODO
+        pass  # TODO
+
     def onDeleteStop(self, cmd: Command):
-        # TODO
+        pass  # TODO
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200
