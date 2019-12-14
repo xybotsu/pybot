@@ -8,7 +8,7 @@ from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
 from uuid import uuid1
 
-Stop = Tuple[str, float, float]
+Stop = Tuple[str, float, float]  # [ticker, qty, stopPrice]
 
 
 @dataclass
@@ -16,7 +16,7 @@ class User:
     user_name: str
     balance: float
     portfolio: Dict[str, float]  # ticker, qty
-    stops: Dict[str, Stop]  # stopID, [ticker, qty, stopPrice]
+    stops: Dict[str, Stop]  # stopID, Stop
 
     def getStop(self, stopID: str) -> Stop:
         return self.stops[stopID]
