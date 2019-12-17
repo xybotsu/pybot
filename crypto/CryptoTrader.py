@@ -1,18 +1,25 @@
 from dataclasses import dataclass
 import pickle
-from typing import Dict, List
+from typing import Dict, List, Tuple, Union
 from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
+from uuid import uuid1
+
+Stop = Tuple[str, float, float]  # [ticker, qty, stopPrice]
 
 
 @dataclass
 class User:
     user_name: str
     balance: float
-    portfolio: Dict[str, float]
+    portfolio: Dict[str, float]  # ticker, qty
+    stops: Dict[str, Stop]  # stopID, Stop
+
+    def getStop(self, stopID: str) -> Stop:
+        return self.stops[stopID]
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with 0 value
@@ -38,6 +45,69 @@ class CryptoTrader:
         self.group = group
         self.api = CoinMarketCapApi()
         pass
+
+    def addStop(self, user: User, stop: Stop) -> Union[Error, User]:
+        (ticker, quantity, price) = stop
+        prices = self.api.getPrices()
+        ticker = ticker.lower()
+
+        if (ticker not in prices):
+            return InvalidCoinError(
+                "Price missing for {ticker}. Try a different coin."
+                .format(ticker=ticker)
+            )
+        if (user.portfolio.get(ticker) and user.portfolio[ticker] < quantity):
+            return InsufficientCoinsError(
+                "{user_name} don't have {coin} coins to sell!"
+                .format(user_name=user.user_name, coin=ticker)
+            )
+
+        stopID = str(uuid1())
+        user.stops[stopID] = (ticker, quantity, price)
+        return user
+
+    def deleteStop(self, user: User, stopID: str):
+        if(user.stops[stopID]):
+            del user.stops[stopID]
+        return user
+
+    def updateStop(
+        self,
+        user: User,
+        stopID: str,
+        stop: Stop
+    ) -> Union[Error, User]:
+        prices = self.api.getPrices()
+        (ticker, qty, stopPrice) = user.getStop(stopID)
+        ticker = ticker.lower()
+
+        if (
+            user.portfolio.get(ticker) and
+            user.portfolio[ticker] >= qty
+        ):
+            # TODO
+            print("do something to user's stops")
+            return user
+        else:
+            return InsufficientCoinsError(
+                "{user_name} don't have {coin} coins to sell!"
+                .format(user_name=user.user_name, coin=ticker)
+            )
+
+    def checkStops(self) -> List[Stop]:
+        sales: List = []
+        for user in self._getAllUsers():
+            user_name = user.user_name
+            for stopID, (ticker, qty, stopPrice) in user.stops.items():
+                price = self.api.getPrices().get(ticker)
+                if price is None:
+                    raise Error("price not found for {}".format(ticker))
+                elif stopPrice <= price:
+                    self.deleteStop(user, stopID)
+                    # self.sell(user_name, ticker, qty)
+                    sales.append((user_name, ticker, qty))
+        # ideally, bot should whisper user saying stop was executed
+        return sales
 
     def buy(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
@@ -95,6 +165,7 @@ class CryptoTrader:
                 User(
                     user_name,
                     CryptoTrader.INITIAL_POT_SIZE,
+                    {},
                     {}
                 )
             )
@@ -114,19 +185,39 @@ class CryptoTrader:
         ]
 
     def _setUser(self, user: User) -> None:
+        user = self._validateUser(user)
         self.db.set(self._key(user.user_name), pickle.dumps(user))
 
-    def create_user(self, user_name):
+    def _validateUser(self, user: User) -> User:
+        for stopID, (ticker, qty, stopPrice) in user.stops.items():
+            if qty > user.portfolio[ticker]:
+                if user.portfolio[ticker] == 0:
+                    user = self.deleteStop(user, stopID)
+                else:
+                    res = self.updateStop(
+                        user,
+                        stopID,
+                        (ticker, user.portfolio[ticker],
+                         stopPrice)
+                    )
+                    if (isinstance(res, Error)):
+                        print(Error)
+                    else:
+                        user = res
+        return user
+
+    def create_user(self, user_name: str) -> None:
         if not self.db.get(self._key(user_name)):
             self._setUser(
                 User(
                     user_name,
                     100000,
+                    {},
                     {}
                 )
             )
 
-    def delete_user(self, user_name):
+    def delete_user(self, user_name: str) -> None:
         if self.db.get(self._key(user_name)):
             self.db.delete(self._key(user_name))
 

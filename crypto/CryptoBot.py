@@ -5,6 +5,8 @@ from .CryptoTrader import (
 )
 from bot.Bot import Bot, Command, SlackBot
 from typing import List, Union
+from threading import Timer
+
 
 class CryptoBot(SlackBot):
 
@@ -18,6 +20,11 @@ class CryptoBot(SlackBot):
         self.trader = trader
         self.lastLeaderboard: Union[str, None] = None
         self.lastTopCoins: Union[str, None] = None
+        self.runMaintenance(5 * 60)
+
+    def runMaintenance(self, interval: float) -> None:
+        self.trader.checkStops()
+        Timer(interval, self.runMaintenance, [interval]).start()
 
     def deleteFileUploads(self, file):
         try:
@@ -82,6 +89,18 @@ class CryptoBot(SlackBot):
         # delete user here...
         self.trader.delete_user(user_name)
         self.onLeaderboard(cmd)
+
+    def onGetStops(self, cmd: Command):
+        pass  # TODO
+
+    def onSetStop(self, cmd: Command):
+        pass  # TODO
+
+    def onUpdateStop(self, cmd: Command):
+        pass  # TODO
+
+    def onDeleteStop(self, cmd: Command):
+        pass  # TODO
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200
