@@ -7,7 +7,7 @@ from .config import (
     REDIS_URL
 )
 
-redis = from_url(REDIS_URL, db=REDIS_DB) if REDIS_URL else (
+redis: StrictRedis = from_url(REDIS_URL, db=REDIS_DB) if REDIS_URL else (
     StrictRedis(
         host=REDIS_HOST,
         port=REDIS_PORT,
