@@ -140,7 +140,7 @@ class CryptoTrader:
     def update_stop(
         self,
         user_name: str,
-        stop_id: str,
+        stop_id: int,
         ticker: str,
         quantity: float,
         price: float
@@ -151,7 +151,7 @@ class CryptoTrader:
     def delete_stop(
         self,
         user_name,
-        stop_id: str
+        stop_id: int
     ) -> None:
         pass  # TODO: implement
 
