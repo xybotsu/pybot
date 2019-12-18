@@ -1,10 +1,13 @@
 from .CryptoTrader import (
     CryptoTrader,
+    Error,
     InsufficientFundsError,
     InsufficientCoinsError
 )
 from bot.Bot import Bot, Command, SlackBot
 from typing import List, Union
+from threading import Timer
+
 
 
 class CryptoBot(SlackBot):
@@ -19,6 +22,22 @@ class CryptoBot(SlackBot):
         self.trader = trader
         self.lastLeaderboard: Union[str, None] = None
         self.lastTopCoins: Union[str, None] = None
+        self.runMaintenance(5 * 60)
+
+    def runMaintenance(self, interval: float) -> None:
+        sales = self.trader.checkStops()
+        for (user_name, id, ticker, qty, price) in sales:
+            self.postMessage(
+                '@'+user_name,
+                "Executed stop #{id}: {q} x {t} @ ${p}".format(
+                    id=id,
+                    q=qty,
+                    t=ticker,
+                    p=price
+                ),
+                ''
+            )
+        Timer(interval, self.runMaintenance, [interval]).start()
 
     def deleteFileUploads(self, file):
         try:
@@ -41,6 +60,10 @@ class CryptoBot(SlackBot):
                 "crypto top",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
+                "crypto setstop <ticker> <quantity> <stopPrice>",
+                "crypto updatestop <stopID> <quantity> <stopPrice>",
+                "crypto cancelstop <stopID>",
+                "crypto stops",
                 "crypto price <ticker>",
                 "crypto play",
                 "crypto quit"
@@ -83,6 +106,105 @@ class CryptoBot(SlackBot):
         # delete user here...
         self.trader.delete_user(user_name)
         self.onLeaderboard(cmd)
+
+    def onGetStops(self, cmd: Command):
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        stops = self.trader.getStops(user_name)
+        if(len(stops) == 0):
+            self.postMessage(
+                channel,
+                "{u} has no stops.".format(u=user_name),
+                thread
+            )
+        else:
+            out: List = ["List of stops for {u}:".format(u=user_name)]
+            for stopID, (ticker, qty, stopPrice) in stops.items():
+                out.append("{id}:\t{t}\t{q}\t{p}".format(
+                    id=stopID,
+                    t=ticker,
+                    q=qty,
+                    p=stopPrice
+                ))
+            self.postMessage(
+                channel,
+                "\n".join(out),
+                thread
+            )
+
+    def onSetStop(self, cmd: Command):
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        try:
+            ticker = args[0].lower()
+            quantity = float(args[1])
+            price = float(args[2])
+        except:
+            self.postMessage(
+                channel,
+                "`crypto setstop <ticker> <quantity> <stopPrice>` is the format you're looking for.",
+                thread
+            )
+            return
+        res = self.trader.addStop(user_name, (ticker, quantity, price))
+        if (isinstance(res, Error)):
+            self.postMessage(channel,str(Error),thread)
+        else:
+            self.onGetStops(cmd)
+
+    def onUpdateStop(self, cmd: Command):
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        try:
+            stopID = int(args[0])
+            quantity = float(args[1])
+            price = float(args[2])
+        except:
+            self.postMessage(
+                channel,
+                "`crypto updatestop <stopID> <quantity> <stopPrice>` is the format you're looking for.",
+                thread
+            )
+            return
+        res = self.trader.updateStop(user_name, stopID, quantity, price)
+        if (isinstance(res, Error)):
+            self.postMessage(channel,str(Error),thread)
+        else:
+            self.onGetStops(cmd)
+
+    def onDeleteStop(self, cmd: Command):
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+        try:
+            stopID = int(args[0])
+        except:
+            self.postMessage(
+                channel,
+                "`crypto cancelstop <stopID>` is the format you're looking for.",
+                thread
+            )
+            return
+        res = self.trader.deleteStop(user_name, stopID)
+        if (isinstance(res, Error)):
+            self.postMessage(channel,str(Error),thread)
+        else:
+            self.onGetStops(cmd)
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200

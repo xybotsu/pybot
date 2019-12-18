@@ -57,6 +57,10 @@ if __name__ == '__main__':
         crypto.register('crypto price', crypto.onPrices, allMessageEvents)
         crypto.register('crypto buy', crypto.onBuy, allMessageEvents)
         crypto.register('crypto sell', crypto.onSell, allMessageEvents)
+        crypto.register('crypto stops', crypto.onGetStops, allMessageEvents)
+        crypto.register('crypto setstop', crypto.onSetStop, allMessageEvents)
+        crypto.register('crypto updatestop', crypto.onUpdateStop, allMessageEvents)
+        crypto.register('crypto cancelstop', crypto.onDeleteStop, allMessageEvents)
         crypto.register('crypto leaderboard',
                         crypto.onLeaderboard, allMessageEvents)
         crypto.register('crypto top', crypto.onTopCoins, allMessageEvents)
@@ -64,7 +68,8 @@ if __name__ == '__main__':
         crypto.register('crypto play', crypto.onNewUser, allMessageEvents)
         crypto.register('crypto quit', crypto.onUserQuit, allMessageEvents)
         crypto.register('crypto ping', crypto.onPing, allMessageEvents)
-        crypto.register('Reminder: crypto ping', crypto.onPing, allMessageEvents)
+        crypto.register('Reminder: crypto ping',
+                        crypto.onPing, allMessageEvents)
 
         # arbitrage bot
         # arbitrage = ArbitrageBot(
