@@ -43,7 +43,6 @@ class UserEncoder(json.JSONEncoder):
 
 
 def as_user(dct):
-    print('debug')
     if 'user_name' in dct:
         return User(
             dct["user_name"],
