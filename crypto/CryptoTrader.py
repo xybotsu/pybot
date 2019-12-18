@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import pickle
 from typing import Dict, List, Tuple
 from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
@@ -115,7 +114,7 @@ class CryptoTrader:
             )
 
     def _key(self, user_name: str) -> str:
-        return "cryptoTrader.{group}.{user_name}".format(
+        return "cryptoTrader.{group}.json.{user_name}".format(
             group=self.group,
             user_name=user_name
         )
@@ -136,7 +135,7 @@ class CryptoTrader:
         )
 
     def _getAllUsers(self) -> List[User]:
-        userKeys = self.db.keys("cryptoTrader.{g}.*".format(g=self.group))
+        userKeys = self.db.keys("cryptoTrader.{g}.json.*".format(g=self.group))
         if not userKeys:
             return []
         return [
@@ -157,7 +156,7 @@ class CryptoTrader:
                 )
             )
 
-    def delete_user(self, user_name):
+    def delete_user(self, user_name: str) -> None:
         if self.db.get(self._key(user_name)):
             self.db.delete(self._key(user_name))
 

@@ -33,9 +33,6 @@ def sync_json(prefix: str) -> None:
         )
 
 
-# syncs pickled data -> json data for all users in prefix
-# sync_json('cryptoTrader.test')
-
 # redix key prefix -> List[User]
 def hydrate_json(prefix: str) -> List[User]:
     return [
@@ -44,6 +41,7 @@ def hydrate_json(prefix: str) -> List[User]:
     ]
 
 
+sync_json('cryptoTrader.test')
 print(
     hydrate_json('cryptoTrader.test.json')
 )
