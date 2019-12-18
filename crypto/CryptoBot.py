@@ -9,6 +9,7 @@ from typing import List, Union
 from threading import Timer
 
 
+
 class CryptoBot(SlackBot):
 
     def __init__(

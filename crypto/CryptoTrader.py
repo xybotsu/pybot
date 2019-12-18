@@ -1,13 +1,14 @@
 from dataclasses import dataclass
-import pickle
 from typing import Dict, List, Tuple, Union
 from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
+import json
 
 Stop = Tuple[str, float, float]  # [ticker, qty, stopPrice]
+
 
 @dataclass
 class User:
@@ -57,6 +58,36 @@ class User:
         for ticker, quantity in self.portfolio.items():
             sum = sum + prices.get(ticker, 0) * quantity
         return sum
+
+
+class UserEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, User):
+            return {
+                'user_name': obj.user_name,
+                'balance': obj.balance,
+                'portfolio': obj.portfolio
+            }
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(self, obj)
+
+
+def as_user(dct):
+    if 'user_name' in dct:
+        return User(
+            dct["user_name"],
+            dct["balance"],
+            dct["portfolio"]
+        )
+    return dct
+
+
+def user_to_json(user: User) -> str:
+    return json.dumps(user, cls=UserEncoder)
+
+
+def json_to_user(j: str) -> User:
+    return json.loads(j, object_hook=as_user)
 
 
 class CryptoTrader:
@@ -185,7 +216,7 @@ class CryptoTrader:
             )
 
     def _key(self, user_name: str) -> str:
-        return "cryptoTrader.{group}.{user_name}".format(
+        return "cryptoTrader.{group}.json.{user_name}".format(
             group=self.group,
             user_name=user_name
         )
@@ -200,24 +231,24 @@ class CryptoTrader:
                     {}
                 )
             )
-        return pickle.loads(
+        return json_to_user(
             self.db.get(
                 self._key(user_name)
             )
         )
 
     def _getAllUsers(self) -> List[User]:
-        userKeys = self.db.keys("cryptoTrader.{g}.*".format(g=self.group))
+        userKeys = self.db.keys("cryptoTrader.{g}.json.*".format(g=self.group))
         if not userKeys:
             return []
         return [
-            pickle.loads(u)
+            json_to_user(u)
             for u in self.db.mget(userKeys)
         ]
 
     def _setUser(self, user: User) -> None:
         user = self._validateUser(user)
-        self.db.set(self._key(user.user_name), pickle.dumps(user))
+        self.db.set(self._key(user.user_name), user_to_json(user))
 
     def _validateUser(self, user: User) -> User:
         for stopID, (ticker, qty, stopPrice) in user.getAllStops().items():
