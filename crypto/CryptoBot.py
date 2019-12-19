@@ -41,6 +41,7 @@ class CryptoBot(SlackBot):
                 "crypto top",
                 "crypto buy <ticker> <quantity>",
                 "crypto sell <ticker> <quantity>",
+                "crypto if <condition> <action>",
                 "crypto price <ticker>",
                 "crypto play",
                 "crypto quit"
@@ -83,6 +84,123 @@ class CryptoBot(SlackBot):
         # delete user here...
         self.trader.delete_user(user_name)
         self.onLeaderboard(cmd)
+
+    # crypto if btc > 100 alert
+    # crypto if btc > 100 sell btc max
+    # crypto if btc > 100 sell btc 10
+    # crypto if btc < 50 buy btc max
+    # crypto if btc < 50 buy btc 10
+    # crypto if
+    # crypto if delete <id>
+
+    def onIf(self, cmd: Command):
+        user_name, args, channel, thread = (
+            cmd.user_name,
+            cmd.args,
+            cmd.channel,
+            cmd.thread
+        )
+
+        # crypto if
+        if len(args) is 0:
+            ifs = self.trader.getIfs(user_name)
+            self.postMessage(
+                channel,
+                "displaying ifs for {}".format(
+                    user_name
+                ),
+                thread
+            )
+
+        # crypto if delete <id>
+        elif args[0] is 'delete':
+            try:
+                id = int(args[1])
+                self.trader.deleteIf(user_name, id)
+                self.postMessage(
+                    channel,
+                    "{} wants to delete {}".format(
+                        user_name,
+                        id
+                    ),
+                    thread
+                )
+            except:
+                self.postMessage(
+                    channel,
+                    "`crypto delete <id>` is the format you're looking for.",
+                    thread
+                )
+                return
+
+        # crypto if btc > 100 alert
+        # crypto if btc > 100 buy btc 100
+        else:
+            try:
+                coin = args[0]
+                comparator = args[1]
+                amount = float(args[2])
+                action = args[3]
+                if action is 'alert':
+                    self.trader.setAlertIf(user_name, coin, comparator, amount)
+                elif action is 'buy':
+                    buyCoin = args[4]
+                    buyQty = float(args[5])
+                    self.trader.setBuyIf(
+                        user_name, coin, comparator, amount, buyCoin, buyQty)
+                    self.postMessage(
+                        channel,
+                        "{} wants to buy {} {} if {} {} {}".format(
+                            user_name,
+                            buyQty,
+                            buyCoin,
+                            coin,
+                            comparator,
+                            amount
+                        ),
+                        thread
+                    )
+                elif action is 'sell':
+                    sellCoin = args[4]
+                    sellQty = float(args[5])
+                    self.trader.setSellIf(
+                        user_name, coin, comparator, amount, sellCoin, sellQty)
+                    self.postMessage(
+                        channel,
+                        "{} wants sell {} {} if {} {} {}".format(
+                            user_name,
+                            sellQty,
+                            sellCoin,
+                            coin,
+                            comparator,
+                            amount
+                        ),
+                        thread
+                    )
+                return
+            except:
+                msg = "\n".join(
+                    [
+                        "example commands",
+                        "crypto if btc > 100 alert",
+                        "crypto if btc > 100 sell btc max",
+                        "crypto if btc > 100 sell btc 10",
+                        "crypto if btc < 50 buy btc max",
+                        "crypto if btc < 50 buy btc 10"
+                    ]
+                )
+                self.postMessage(
+                    channel,
+                    _mono(msg),
+                    thread
+                )
+                return
+
+        self.postMessage(
+            channel,
+            'pong!',
+            thread
+        )
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200
