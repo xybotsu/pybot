@@ -1,5 +1,6 @@
-from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json
+from typing import Dict, List, Tuple, Union
 from .CoinMarketCap import CachedGet, CoinMarketCapApi
 from collections import defaultdict
 from redis import StrictRedis
@@ -8,11 +9,49 @@ from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
 import json
 
 
+@dataclass_json
+@dataclass
+class Condition:
+    coin: str
+    condition: str
+    price: float
+
+
+@dataclass_json
+@dataclass
+class Alert:
+    pass
+
+
+@dataclass_json
+@dataclass
+class Buy:
+    coin: str
+    qty: float
+
+
+@dataclass_json
+@dataclass
+class Sell:
+    coin: str
+    qty: float
+
+
+@dataclass_json
+@dataclass
+class If:
+    id: int
+    condition: Condition
+    action: Union[Alert, Buy, Sell]
+
+
+@dataclass_json
 @dataclass
 class User:
     user_name: str
     balance: float
     portfolio: Dict[str, float]
+    ifs: List[If] = field(default_factory=list)
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with 0 value
@@ -27,36 +66,6 @@ class User:
         for ticker, quantity in self.portfolio.items():
             sum = sum + prices.get(ticker, 0) * quantity
         return sum
-
-
-class UserEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, User):
-            return {
-                'user_name': obj.user_name,
-                'balance': obj.balance,
-                'portfolio': obj.portfolio
-            }
-        # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(self, obj)
-
-
-def as_user(dct):
-    if 'user_name' in dct:
-        return User(
-            dct["user_name"],
-            dct["balance"],
-            dct["portfolio"]
-        )
-    return dct
-
-
-def user_to_json(user: User) -> str:
-    return json.dumps(user, cls=UserEncoder)
-
-
-def json_to_user(j: str) -> User:
-    return json.loads(j, object_hook=as_user)
 
 
 class CryptoTrader:
@@ -113,6 +122,48 @@ class CryptoTrader:
                 .format(user_name=user_name, coin=ticker)
             )
 
+    def getIfs(self, user_name: str) -> List[If]:
+        user = self._getUser(user_name)
+        return user.ifs
+
+    def deleteIf(self, user_name: str, id: int) -> None:
+        # TODO: implement
+        pass
+
+    def setAlertIf(
+        self,
+        user_name: str,
+        coin: str,
+        comparator: str,
+        amount: float
+    ) -> None:
+        # TODO: implement
+        pass
+
+    def setBuyIf(
+        self,
+        user_name: str,
+        coin: str,
+        comparator: str,
+        amount: float,
+        buyCoin: str,
+        buyQty: float
+    ) -> None:
+        # TODO: implement
+        pass
+
+    def setSellIf(
+        self,
+        user_name: str,
+        coin: str,
+        comparator: str,
+        amount: float,
+        sellCoin: str,
+        sellQty: float
+    ) -> None:
+        # TODO: implement
+        pass
+
     def _key(self, user_name: str) -> str:
         return "cryptoTrader.{group}.json.{user_name}".format(
             group=self.group,
@@ -128,7 +179,7 @@ class CryptoTrader:
                     {}
                 )
             )
-        return json_to_user(
+        return User.from_json(  # type: ignore
             self.db.get(
                 self._key(user_name)
             )
@@ -139,12 +190,12 @@ class CryptoTrader:
         if not userKeys:
             return []
         return [
-            json_to_user(u)
+            User.from_json(u)  # type: ignore
             for u in self.db.mget(userKeys)
         ]
 
     def _setUser(self, user: User) -> None:
-        self.db.set(self._key(user.user_name), user_to_json(user))
+        self.db.set(self._key(user.user_name), user.to_json())  # type: ignore
 
     def create_user(self, user_name):
         if not self.db.get(self._key(user_name)):
