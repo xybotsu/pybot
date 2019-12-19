@@ -161,7 +161,7 @@ class CryptoBot(SlackBot):
                 elif action == 'buy':
                     print('buy', args)
                     buyCoin = args[4]
-                    buyQty = float(args[5])
+                    buyQty = args[5]
                     # self.trader.setBuyIf(
                     #     user_name, coin, comparator, amount, buyCoin, buyQty)
                     self.postMessage(
@@ -179,7 +179,7 @@ class CryptoBot(SlackBot):
                 elif action == 'sell':
                     print('sell', args)
                     sellCoin = args[4]
-                    sellQty = float(args[5])
+                    sellQty = args[5]
                     # self.trader.setSellIf(
                     #     user_name, coin, comparator, amount, sellCoin, sellQty)
                     self.postMessage(

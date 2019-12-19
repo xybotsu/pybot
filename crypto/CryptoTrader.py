@@ -147,7 +147,7 @@ class CryptoTrader:
         comparator: str,
         amount: float,
         buyCoin: str,
-        buyQty: float
+        buyQty: str
     ) -> None:
         # TODO: implement
         return
@@ -159,7 +159,7 @@ class CryptoTrader:
         comparator: str,
         amount: float,
         sellCoin: str,
-        sellQty: float
+        sellQty: str
     ) -> None:
         # TODO: implement
         return
