@@ -101,9 +101,11 @@ class CryptoBot(SlackBot):
             cmd.thread
         )
 
+        print(args)
+
         # crypto if
         if len(args) is 0:
-            ifs = self.trader.getIfs(user_name)
+            # ifs = self.trader.getIfs(user_name)
             self.postMessage(
                 channel,
                 "displaying ifs for {}".format(
@@ -115,8 +117,10 @@ class CryptoBot(SlackBot):
         # crypto if delete <id>
         elif args[0] is 'delete':
             try:
+                print('delete')
+                print(args)
                 id = int(args[1])
-                self.trader.deleteIf(user_name, id)
+                # self.trader.deleteIf(user_name, id)
                 self.postMessage(
                     channel,
                     "{} wants to delete {}".format(
@@ -125,13 +129,13 @@ class CryptoBot(SlackBot):
                     ),
                     thread
                 )
-            except:
+            except Exception as e:
+                print(e)
                 self.postMessage(
                     channel,
                     "`crypto delete <id>` is the format you're looking for.",
                     thread
                 )
-                return
 
         # crypto if btc > 100 alert
         # crypto if btc > 100 buy btc 100
@@ -142,7 +146,8 @@ class CryptoBot(SlackBot):
                 amount = float(args[2])
                 action = args[3]
                 if action is 'alert':
-                    self.trader.setAlertIf(user_name, coin, comparator, amount)
+                    print('alert', args)
+                    # self.trader.setAlertIf(user_name, coin, comparator, amount)
                     self.postMessage(
                         channel,
                         "{} wants an alert when {} {} {}".format(
@@ -154,10 +159,11 @@ class CryptoBot(SlackBot):
                         thread
                     )
                 elif action is 'buy':
+                    print('buy', args)
                     buyCoin = args[4]
                     buyQty = float(args[5])
-                    self.trader.setBuyIf(
-                        user_name, coin, comparator, amount, buyCoin, buyQty)
+                    # self.trader.setBuyIf(
+                    #     user_name, coin, comparator, amount, buyCoin, buyQty)
                     self.postMessage(
                         channel,
                         "{} wants to buy {} {} if {} {} {}".format(
@@ -171,10 +177,11 @@ class CryptoBot(SlackBot):
                         thread
                     )
                 elif action is 'sell':
+                    print('sell', args)
                     sellCoin = args[4]
                     sellQty = float(args[5])
-                    self.trader.setSellIf(
-                        user_name, coin, comparator, amount, sellCoin, sellQty)
+                    # self.trader.setSellIf(
+                    #     user_name, coin, comparator, amount, sellCoin, sellQty)
                     self.postMessage(
                         channel,
                         "{} wants sell {} {} if {} {} {}".format(
@@ -187,8 +194,8 @@ class CryptoBot(SlackBot):
                         ),
                         thread
                     )
-                return
-            except:
+            except Exception as e:
+                print(e)
                 msg = "\n".join(
                     [
                         "example commands",
@@ -204,13 +211,6 @@ class CryptoBot(SlackBot):
                     _mono(msg),
                     thread
                 )
-                return
-
-        self.postMessage(
-            channel,
-            'pong!',
-            thread
-        )
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200

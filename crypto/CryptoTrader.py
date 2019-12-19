@@ -128,7 +128,7 @@ class CryptoTrader:
 
     def deleteIf(self, user_name: str, id: int) -> None:
         # TODO: implement
-        pass
+        return
 
     def setAlertIf(
         self,
@@ -138,7 +138,7 @@ class CryptoTrader:
         amount: float
     ) -> None:
         # TODO: implement
-        pass
+        return
 
     def setBuyIf(
         self,
@@ -150,7 +150,7 @@ class CryptoTrader:
         buyQty: float
     ) -> None:
         # TODO: implement
-        pass
+        return
 
     def setSellIf(
         self,
@@ -162,7 +162,7 @@ class CryptoTrader:
         sellQty: float
     ) -> None:
         # TODO: implement
-        pass
+        return
 
     def _key(self, user_name: str) -> str:
         return "cryptoTrader.{group}.json.{user_name}".format(
