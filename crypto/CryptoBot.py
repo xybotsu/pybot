@@ -143,6 +143,16 @@ class CryptoBot(SlackBot):
                 action = args[3]
                 if action is 'alert':
                     self.trader.setAlertIf(user_name, coin, comparator, amount)
+                    self.postMessage(
+                        channel,
+                        "{} wants an alert when {} {} {}".format(
+                            user_name,
+                            coin,
+                            comparator,
+                            amount
+                        ),
+                        thread
+                    )
                 elif action is 'buy':
                     buyCoin = args[4]
                     buyQty = float(args[5])
