@@ -104,7 +104,7 @@ class CryptoBot(SlackBot):
         print(args)
 
         # crypto if
-        if len(args) is 0:
+        if len(args) == 0:
             # ifs = self.trader.getIfs(user_name)
             self.postMessage(
                 channel,
@@ -115,7 +115,7 @@ class CryptoBot(SlackBot):
             )
 
         # crypto if delete <id>
-        elif args[0] is 'delete':
+        elif args[0] == 'delete':
             try:
                 print('delete')
                 print(args)
@@ -145,7 +145,7 @@ class CryptoBot(SlackBot):
                 comparator = args[1]
                 amount = float(args[2])
                 action = args[3]
-                if action is 'alert':
+                if action == 'alert':
                     print('alert', args)
                     # self.trader.setAlertIf(user_name, coin, comparator, amount)
                     self.postMessage(
@@ -158,7 +158,7 @@ class CryptoBot(SlackBot):
                         ),
                         thread
                     )
-                elif action is 'buy':
+                elif action == 'buy':
                     print('buy', args)
                     buyCoin = args[4]
                     buyQty = float(args[5])
@@ -176,7 +176,7 @@ class CryptoBot(SlackBot):
                         ),
                         thread
                     )
-                elif action is 'sell':
+                elif action == 'sell':
                     print('sell', args)
                     sellCoin = args[4]
                     sellQty = float(args[5])
