@@ -150,6 +150,12 @@ class CryptoTrader:
                 .format(coin=coin)
             )
 
+        if (coin not in prices):
+            raise InvalidCoinError(
+                "Price missing for {coin}. Try a different coin."
+                .format(coin=coin)
+            )
+
         price = prices[coin]
 
         # coin > amount
@@ -209,6 +215,12 @@ class CryptoTrader:
                 .format(coin=coin)
             )
 
+        if (buyCoin not in prices):
+            raise InvalidCoinError(
+                "Price missing for {buyCoin}. Try a different coin."
+                .format(buyCoin=buyCoin)
+            )
+
         price = prices[coin]
 
         # coin > amount
@@ -233,7 +245,7 @@ class CryptoTrader:
                         amount
                     ),
                     Buy(
-                        coin,
+                        buyCoin,
                         buyQuantity  # either float or 'max'
                     )
                 )
@@ -268,6 +280,12 @@ class CryptoTrader:
                 .format(coin=coin)
             )
 
+        if (sellCoin not in prices):
+            raise InvalidCoinError(
+                "Price missing for {sellCoin}. Try a different coin."
+                .format(sellCoin=sellCoin)
+            )
+
         price = prices[coin]
 
         # coin > amount
@@ -291,8 +309,8 @@ class CryptoTrader:
                         comparator,
                         amount
                     ),
-                    Buy(
-                        coin,
+                    Sell(
+                        sellCoin,
                         sellQuantity  # either float or 'max'
                     )
                 )
