@@ -200,7 +200,7 @@ class CryptoBot(SlackBot):
                         "crypto if btc < 50 buy btc max",
                         "crypto if btc < 50 buy btc 10",
                         "crypto if",
-                        "crypto if delete"
+                        "crypto if delete &lt;id&gt;"
                     ]
                 )
                 self.postMessage(
