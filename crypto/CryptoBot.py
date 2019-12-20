@@ -172,23 +172,19 @@ class CryptoBot(SlackBot):
                         )
                         return
                 elif action == 'sell':
-                    print('sell', args)
-                    sellCoin = args[4]
-                    sellQty = args[5]
-                    # self.trader.setSellIf(
-                    #     user_name, coin, comparator, amount, sellCoin, sellQty)
-                    self.postMessage(
-                        channel,
-                        "{} wants sell {} {} if {} {} {}".format(
-                            user_name,
-                            sellQty,
-                            sellCoin,
-                            coin,
-                            comparator,
-                            amount
-                        ),
-                        thread
-                    )
+                    try:
+                        sellCoin = args[4]
+                        sellQty = args[5]
+                        self.trader.setSellIf(
+                            user_name, coin, comparator, amount, sellCoin, sellQty)
+                        self.displayIfs(user_name, channel, thread)
+                    except Exception as e:
+                        self.postMessage(
+                            channel,
+                            _mono(str(e)),
+                            thread
+                        )
+                        return
             except Exception as e:
                 print(e)
                 msg = "\n".join(

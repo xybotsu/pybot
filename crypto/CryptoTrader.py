@@ -268,7 +268,7 @@ class CryptoTrader:
                 sellQuantity = 'max'
             else:
                 raise InvalidSellQuantityError(
-                    "Either buy a numeric amount of coin, or specify 'max'"
+                    "Either sell a numeric amount of coin, or specify 'max'"
                 )
 
         user = self._getUser(user_name)
