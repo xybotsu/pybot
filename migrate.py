@@ -34,23 +34,23 @@ from typing import Dict, List
 
 
 # redix key prefix -> List[User]
-def hydrate_json(prefix: str) -> List[User]:
-    return [
-        User.from_json(redis.get(account))  # type: ignore
-        for account in redis.keys('{}.*'.format(prefix))
-    ]
+# def hydrate_json(prefix: str) -> List[User]:
+#     return [
+#         User.from_json(redis.get(account))  # type: ignore
+#         for account in redis.keys('{}.*'.format(prefix))
+#     ]
 
 
 # sync_json('cryptoTrader.test')
-print(
-    hydrate_json('cryptoTrader.test.json')
-)
+# print(
+#     hydrate_json('cryptoTrader.test.json')
+# )
 
-users = hydrate_json('cryptoTrader.test.json')
+# users = hydrate_json('cryptoTrader.test.json')
 
-jsons = [
-    user.to_json()  # type: ignore
-    for user in users
-]
+# jsons = [
+#     user.to_json()  # type: ignore
+#     for user in users
+# ]
 
-print(jsons)
+# print(jsons)
