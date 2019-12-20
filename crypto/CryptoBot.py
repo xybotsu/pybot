@@ -85,6 +85,22 @@ class CryptoBot(SlackBot):
         self.trader.delete_user(user_name)
         self.onLeaderboard(cmd)
 
+    def displayIfs(self, user_name: str, channel: str, thread: str) -> None:
+        # TODO: improve formatting of this display
+        ifs = self.trader._getUser(user_name).ifs
+        if len(ifs) == 0:
+            msg = 'No ifs for {}!'.format(user_name)
+        else:
+            msg = '\n'.join([
+                i.to_json()  # type: ignore
+                for i in ifs
+            ])
+        self.postMessage(
+            channel,
+            _mono(msg),
+            thread
+        )
+
     # crypto if btc > 100 alert
     # crypto if btc > 100 sell btc max
     # crypto if btc > 100 sell btc 10
@@ -105,30 +121,14 @@ class CryptoBot(SlackBot):
 
         # crypto if
         if len(args) == 0:
-            # ifs = self.trader.getIfs(user_name)
-            self.postMessage(
-                channel,
-                "displaying ifs for {}".format(
-                    user_name
-                ),
-                thread
-            )
+            self.displayIfs(user_name, channel, thread)
 
         # crypto if delete <id>
         elif args[0] == 'delete':
             try:
-                print('delete')
-                print(args)
                 id = int(args[1])
-                # self.trader.deleteIf(user_name, id)
-                self.postMessage(
-                    channel,
-                    "{} wants to delete {}".format(
-                        user_name,
-                        id
-                    ),
-                    thread
-                )
+                self.trader.deleteIf(user_name, id)
+                self.displayIfs(user_name, channel, thread)
             except Exception as e:
                 print(e)
                 self.postMessage(
@@ -146,36 +146,31 @@ class CryptoBot(SlackBot):
                 amount = float(args[2])
                 action = args[3]
                 if action == 'alert':
-                    print('alert', args)
-                    # self.trader.setAlertIf(user_name, coin, comparator, amount)
-                    self.postMessage(
-                        channel,
-                        "{} wants an alert when {} {} {}".format(
-                            user_name,
-                            coin,
-                            comparator,
-                            amount
-                        ),
-                        thread
-                    )
+                    try:
+                        self.trader.setAlertIf(
+                            user_name, coin, comparator, amount)
+                        self.displayIfs(user_name, channel, thread)
+                    except Exception as e:
+                        self.postMessage(
+                            channel,
+                            _mono(str(e)),
+                            thread
+                        )
+                        return
                 elif action == 'buy':
-                    print('buy', args)
-                    buyCoin = args[4]
-                    buyQty = args[5]
-                    # self.trader.setBuyIf(
-                    #     user_name, coin, comparator, amount, buyCoin, buyQty)
-                    self.postMessage(
-                        channel,
-                        "{} wants to buy {} {} if {} {} {}".format(
-                            user_name,
-                            buyQty,
-                            buyCoin,
-                            coin,
-                            comparator,
-                            amount
-                        ),
-                        thread
-                    )
+                    try:
+                        buyCoin = args[4]
+                        buyQty = args[5]
+                        self.trader.setBuyIf(
+                            user_name, coin, comparator, amount, buyCoin, buyQty)
+                        self.displayIfs(user_name, channel, thread)
+                    except Exception as e:
+                        self.postMessage(
+                            channel,
+                            _mono(str(e)),
+                            thread
+                        )
+                        return
                 elif action == 'sell':
                     print('sell', args)
                     sellCoin = args[4]
@@ -203,7 +198,9 @@ class CryptoBot(SlackBot):
                         "crypto if btc > 100 sell btc max",
                         "crypto if btc > 100 sell btc 10",
                         "crypto if btc < 50 buy btc max",
-                        "crypto if btc < 50 buy btc 10"
+                        "crypto if btc < 50 buy btc 10",
+                        "crypto if",
+                        "crypto if delete"
                     ]
                 )
                 self.postMessage(
