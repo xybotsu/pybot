@@ -22,6 +22,7 @@ class Condition:
 @dataclass
 class Alert:
     msg: str
+    type: Literal['alert'] = 'alert'
 
 
 @dataclass_json
@@ -29,6 +30,7 @@ class Alert:
 class Buy:
     coin: str
     qty: Union[float, Literal['max']]
+    type: Literal['buy'] = 'buy'
 
 
 @dataclass_json
@@ -36,6 +38,7 @@ class Buy:
 class Sell:
     coin: str
     qty: Union[float, Literal['max']]
+    type: Literal['sell'] = 'sell'
 
 
 @dataclass_json
@@ -180,7 +183,7 @@ class CryptoTrader:
                         amount
                     ),
                     Alert(
-                        "Alert! The price of {} is {} {}.".format(
+                        msg="Alert! The price of {} is {} {}.".format(
                             coin, comparator, amount)
                     )
                 )
@@ -245,8 +248,8 @@ class CryptoTrader:
                         amount
                     ),
                     Buy(
-                        buyCoin,
-                        buyQuantity  # either float or 'max'
+                        coin=buyCoin,
+                        qty=buyQuantity  # either float or 'max'
                     )
                 )
             )
@@ -310,8 +313,8 @@ class CryptoTrader:
                         amount
                     ),
                     Sell(
-                        sellCoin,
-                        sellQuantity  # either float or 'max'
+                        coin=sellCoin,
+                        qty=sellQuantity  # either float or 'max'
                     )
                 )
             )
