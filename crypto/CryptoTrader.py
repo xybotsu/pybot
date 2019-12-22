@@ -66,14 +66,14 @@ class If:
 
     def render(self) -> str:
         if self.action['type'] == 'alert':
-            return '[id {}] if {} {} {} then alert'.format(
+            return '[id {}] if {} {} {} alert'.format(
                 self.id,
                 self.condition.coin,
                 self.condition.comparator,
                 self.condition.price
             )
         else:
-            return '[id {}] if {} {} {} then {} {} {}'.format(
+            return '[id {}] if {} {} {} {} {} {}'.format(
                 self.id,
                 self.condition.coin,
                 self.condition.comparator,
