@@ -17,6 +17,13 @@ class Condition:
     comparator: str  # > or <
     price: float
 
+    def render(self) -> str:
+        if self.comparator == '&gt;':
+            comp = '>'
+        elif self.comparator == '&lt;':
+            comp = '<'
+        return '{} {} {}'.format(self.coin, comp, self.price)
+
 
 @dataclass_json
 @dataclass
@@ -47,6 +54,34 @@ class If:
     id: int
     condition: Condition
     action: Union[Alert, Buy, Sell]
+
+    def meets_condition(self, prices: Dict[str, float]) -> bool:
+        if self.condition.comparator == '&gt;':
+            return prices[self.condition.coin] > self.condition.price
+        elif self.condition.comparator == '&lt;':
+            return prices[self.condition.coin] < self.condition.price
+        else:
+            raise InvalidConditionError(
+                'We only support a > b or a < b conditions at this time.')
+
+    def render(self) -> str:
+        if self.action['type'] == 'alert':
+            return '[id {}] if {} {} {} then alert'.format(
+                self.id,
+                self.condition.coin,
+                self.condition.comparator,
+                self.condition.price
+            )
+        else:
+            return '[id {}] if {} {} {} then {} {} {}'.format(
+                self.id,
+                self.condition.coin,
+                self.condition.comparator,
+                self.condition.price,
+                self.action['type'],
+                self.action['coin'],
+                self.action['qty']
+            )
 
 
 @dataclass_json
@@ -86,7 +121,6 @@ class CryptoTrader:
         self.db = db
         self.group = group
         self.api = CoinMarketCapApi()
-        pass
 
     def buy(self, user_name: str, ticker: str, quantity: float) -> None:
         user = self._getUser(user_name)
@@ -341,7 +375,7 @@ class CryptoTrader:
             )
         )
 
-    def _getAllUsers(self) -> List[User]:
+    def getAllUsers(self) -> List[User]:
         userKeys = self.db.keys("cryptoTrader.{g}.json.*".format(g=self.group))
         if not userKeys:
             return []
@@ -400,7 +434,7 @@ class CryptoTrader:
         return getCryptoTopPng(rows)
 
     def leaderboard(self):
-        users = self._getAllUsers()
+        users = self.getAllUsers()
 
         if not users:
             return 'No leaderboard created yet. `crypto help` to start.'
@@ -459,6 +493,10 @@ class InsufficientCoinsError(Error):
 
 
 class InvalidCoinError(Error):
+    pass
+
+
+class InvalidConditionError(Error):
     pass
 
 

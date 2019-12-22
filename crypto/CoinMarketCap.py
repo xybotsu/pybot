@@ -52,7 +52,6 @@ class CachedGet:
             self.cache[url] = (resp, current_time_ms())
             return resp
         else:
-            print("cache hit! already have data for {url}".format(url=url))
             return self.cache[url][0]
 
 
