@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 from redis import from_url, StrictRedis
 from .config import SLACK_TOKEN
 from .users import getUser
@@ -23,7 +23,7 @@ class SlackBot(SlackClient):
         self.db = db
         self._triggers: Dict = {}
 
-    def postMessage(self, channel: str, message: str, thread: str):
+    def postMessage(self, channel: str, message: str, thread: Optional[str]):
         self.api_call(
             'chat.postMessage',
             channel=channel,
