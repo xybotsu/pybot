@@ -27,11 +27,14 @@ class CryptoBot(SlackBot):
         self.poll_and_execute_ifs()
 
     def poll_and_execute_ifs(self) -> None:
-        threading.Timer(5.0, self.poll_and_execute_ifs).start()
+        # poll every 30 minutes
+        # CoinMarketCap API limit is only 300 calls per day, so we need to limit the poll frequency here
+        threading.Timer(60 * 30, self.poll_and_execute_ifs).start()
 
         # get all users
+        prices = self.trader.api.getPrices()
         for user in self.trader.getAllUsers():
-            self.execute_ifs(user, self.trader.api.getPrices())
+            self.execute_ifs(user, prices)
 
     def execute_ifs(self, user: User, prices: Dict[str, float]) -> None:
         idx = 0
