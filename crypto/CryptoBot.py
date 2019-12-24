@@ -68,6 +68,9 @@ class CryptoBot(SlackBot):
                             username=self.bot.name,
                             icon_emoji=self.bot.icon_emoji
                         )
+                        db_user = self.trader._getUser(user.user_name)
+                        user.portfolio = db_user.portfolio
+                        self._onLeaderboard('#crypto', None)
                     elif i.action['type'] == 'sell':  # type: ignore
                         self.trader.sell(
                             # type: ignore
@@ -81,6 +84,9 @@ class CryptoBot(SlackBot):
                             username=self.bot.name,
                             icon_emoji=self.bot.icon_emoji
                         )
+                        db_user = self.trader._getUser(user.user_name)
+                        user.portfolio = db_user.portfolio
+                        self._onLeaderboard('#crypto', None)
                     # action succeeded, so remove it from ifs
                     del(ifs[idx])
             except Exception as e:
