@@ -76,7 +76,7 @@ class CryptoBot(SlackBot):
                         self.api_call(
                             'chat.postMessage',
                             channel='#crypto',
-                            text='[triggered by crypto if] {u} bought {t} x {q}'
+                            text='[triggered by crypto if] {u} sold {t} x {q}'
                             .format(u=user.user_name, t=i.action['coin'], q=i.action['qty']),
                             username=self.bot.name,
                             icon_emoji=self.bot.icon_emoji
