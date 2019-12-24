@@ -60,19 +60,20 @@ class CryptoBot(SlackBot):
                     elif i.action['type'] == 'buy':  # type: ignore
                         coin = i.action['coin']  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        toQty = i.action['qty']  # type: ignore
-                        fromUSD = user.balance
+                        toQty = fromQty + i.action['qty']  # type: ignore
+                        fromUSD = "{0:.1f}".format(user.balance)
                         self.trader.buy(
                             user.user_name, coin, toQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
-                        toUSD = user.balance
+                        toUSD = "{0:.1f}".format(user.balance)
+                        msg = '[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'.format(
+                            user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
                         self.api_call(
                             'chat.postMessage',
                             channel='#crypto',
-                            text='[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'
-                            .format(user.user_name, fromUSD, toUSD, coin, fromQty, toQty),
+                            text=_mono(msg),
                             username=self.bot.name,
                             icon_emoji=self.bot.icon_emoji
                         )
@@ -80,20 +81,21 @@ class CryptoBot(SlackBot):
                     elif i.action['type'] == 'sell':  # type: ignore
                         coin = i.action['coin']  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        toQty = i.action['qty']  # type: ignore
-                        fromUSD = user.balance
+                        toQty = fromQty - i.action['qty']  # type: ignore
+                        fromUSD = "{0:.1f}".format(user.balance)
                         self.trader.sell(
                             user.user_name, coin, toQty
                         )
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
-                        toUSD = user.balance
+                        toUSD = "{0:.1f}".format(user.balance)
+                        msg = '[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'.format(
+                            user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
                         self.api_call(
                             'chat.postMessage',
                             channel='#crypto',
-                            text='[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'
-                            .format(user.user_name, fromUSD, toUSD, coin, fromQty, toQty),
+                            text=_mono(msg),
                             username=self.bot.name,
                             icon_emoji=self.bot.icon_emoji
                         )
