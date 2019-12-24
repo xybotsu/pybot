@@ -68,8 +68,8 @@ class CryptoBot(SlackBot):
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
                         toUSD = "{0:.1f}".format(user.balance)
-                        msg = '[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'.format(
-                            user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
+                        msg = "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
+                            i.render(), user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
                         self.api_call(
                             'chat.postMessage',
                             channel='#crypto',
@@ -90,8 +90,8 @@ class CryptoBot(SlackBot):
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
                         toUSD = "{0:.1f}".format(user.balance)
-                        msg = '[triggered by crypto if] {} USD {} -> {}, {} {} -> {}'.format(
-                            user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
+                        msg = "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
+                            i.render(), user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
                         self.api_call(
                             'chat.postMessage',
                             channel='#crypto',
