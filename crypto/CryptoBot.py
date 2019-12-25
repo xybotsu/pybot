@@ -60,15 +60,16 @@ class CryptoBot(SlackBot):
                     elif i.action['type'] == 'buy':  # type: ignore
                         coin = i.action['coin']  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        toQty = fromQty + i.action['qty']  # type: ignore
+                        buyQty = i.action['qty']
+                        toQty = fromQty + buyQty  # type: ignore
                         fromUSD = "{0:.1f}".format(user.balance)
                         self.trader.buy(
-                            user.user_name, coin, toQty)
+                            user.user_name, coin, buyQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
                         toUSD = "{0:.1f}".format(user.balance)
-                        msg = "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
+                        msg = "{}\n[triggered] {} USD {} -> {}, {} {} -> {}".format(
                             i.render(), user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
                         self.api_call(
                             'chat.postMessage',
@@ -81,10 +82,11 @@ class CryptoBot(SlackBot):
                     elif i.action['type'] == 'sell':  # type: ignore
                         coin = i.action['coin']  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        toQty = fromQty - i.action['qty']  # type: ignore
+                        sellQty = i.action['qty']  # type: ignore
+                        toQty = fromQty - sellQty
                         fromUSD = "{0:.1f}".format(user.balance)
                         self.trader.sell(
-                            user.user_name, coin, toQty
+                            user.user_name, coin, sellQty
                         )
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
