@@ -82,7 +82,7 @@ class CoinMarketCapApi:
         listings = self.getListings().data
         print(listings[0])
         return {
-            listing.symbol.lower(): listing.quote['USD'].price
+            listing.symbol.lower(): listing.quote['USD']["price"]
             for listing in listings
         }
 
