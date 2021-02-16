@@ -150,6 +150,22 @@ class CryptoBot(SlackBot):
             thread
         )
 
+    def onWhen(self, cmd: Command):
+        # crypto when
+        channel, thread = cmd.channel, cmd.thread
+
+        msg = 'no clue'
+        if cmd.args[0] == 'lambo':
+            msg = ':racing_car:'
+        else if cmd.args[0] == 'moon':
+            msg = ':full_moon_with_face:'
+
+        self.postMessage(
+            channel,
+            msg,
+            thread
+        )
+
     def onPing(self, cmd: Command):
         channel, thread = cmd.channel, cmd.thread
         self.postMessage(

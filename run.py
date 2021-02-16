@@ -65,6 +65,7 @@ if __name__ == '__main__':
         crypto.register('crypto quit', crypto.onUserQuit, allMessageEvents)
         crypto.register('crypto ping', crypto.onPing, allMessageEvents)
         crypto.register('crypto if', crypto.onIf, allMessageEvents)
+        crypto.register('crypto when', crypto.onWhen, allMessageEvents)
         crypto.register('Reminder: crypto ping',
                         crypto.onPing, allMessageEvents)
 
