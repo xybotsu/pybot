@@ -79,9 +79,11 @@ class CoinMarketCapApi:
         return loads(resp.text, cls=ListingsDecoder)
 
     def getPrices(self) -> Dict[str, float]:
+        listings = self.getListings().data
+        print(listings)
         return {
             listing.symbol.lower(): listing.quote['USD'].price
-            for listing in self.getListings().data
+            for listing in listings
         }
 
     def getTopNListings(self, n: int) -> List[Listing]:
