@@ -80,7 +80,7 @@ class CoinMarketCapApi:
 
     def getPrices(self) -> Dict[str, float]:
         listings = self.getListings().data
-        print(listings)
+        print(listings[0])
         return {
             listing.symbol.lower(): listing.quote['USD'].price
             for listing in listings
