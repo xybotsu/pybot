@@ -19,7 +19,7 @@ def insert(command: str, data=()):
             return curs.statusmessage
 
 
-'''
+"""
 Example Usage:
 
 status = insert("INSERT INTO test (num, data) VALUES (%s, %s);", (150, "fff"))
@@ -28,4 +28,4 @@ print(status)
 results = sql("SELECT * from test WHERE id > 3;")
 print(results)
 
-'''
+"""

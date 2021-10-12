@@ -6,17 +6,20 @@ from datetime import datetime
 from crypto.CryptoTrader import User
 from typing import Dict, List
 
+
 def get_users(prefix: str) -> List[User]:
-  return [
-    User.from_json(redis.get(account))
-    for account in redis.keys('{}.*'.format(prefix)) 
-  ]
+    return [
+        User.from_json(redis.get(account))
+        for account in redis.keys("{}.*".format(prefix))
+    ]
+
 
 def get_ifs(prefix: str):
-  for user in get_users(prefix):
-    print(user.ifs)
-  
-get_ifs('cryptoTrader.test.json')
+    for user in get_users(prefix):
+        print(user.ifs)
+
+
+get_ifs("cryptoTrader.test.json")
 
 # def delete_all_ifs(prefix: str) -> None:
 #   for account, user in get_game(prefix):

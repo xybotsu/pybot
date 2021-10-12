@@ -14,23 +14,22 @@ class Bot:
 
 
 class SlackBot(SlackClient):
-
     def __init__(self, token: str, bot: Bot, db: StrictRedis) -> None:
         super().__init__(token)
-        if (not self.rtm_connect()):
-            raise IOError('Connection to Slack failed, check your token')
+        if not self.rtm_connect():
+            raise IOError("Connection to Slack failed, check your token")
         self.bot = bot
         self.db = db
         self._triggers: Dict = {}
 
     def postMessage(self, channel: str, message: str, thread: Optional[str]):
         self.api_call(
-            'chat.postMessage',
+            "chat.postMessage",
             channel=channel,
             text=message,
             thread_ts=thread,
             username=self.bot.name,
-            icon_emoji=self.bot.icon_emoji
+            icon_emoji=self.bot.icon_emoji,
         )
 
     def register(self, trigger: str, callback, condition):
@@ -40,7 +39,7 @@ class SlackBot(SlackClient):
 
     def notify(self, command):
         # notifies all subscribers when command triggers, if condition is true
-        for mc in (self._triggers.get(command.trigger, [])):
+        for mc in self._triggers.get(command.trigger, []):
             if mc.condition(command.event):
                 mc.callback(command)
 
@@ -48,8 +47,10 @@ class SlackBot(SlackClient):
         # listens for commands, and process them in turn
         while True:
             try:
-                events = filter(lambda e: e.get('type') ==
-                                'message' and 'text' in e, self.rtm_read())
+                events = filter(
+                    lambda e: e.get("type") == "message" and "text" in e,
+                    self.rtm_read(),
+                )
                 for event in events:
                     command = self._messageEventToCommand(event)
                     if command:
@@ -62,20 +63,20 @@ class SlackBot(SlackClient):
 
     def _messageEventToCommand(self, event):
         for trigger in self._triggers.keys():
-            if event['text'].lower().startswith(trigger.lower()):
-                args = event['text'][len(trigger):].strip().lower().split()
+            if event["text"].lower().startswith(trigger.lower()):
+                args = event["text"][len(trigger) :].strip().lower().split()
                 return Command(
                     trigger,
                     args,
                     Event(
-                        event.get('type'),
-                        event.get('subtype'),
-                        event.get('channel'),
-                        event.get('user'),
-                        event.get('text'),
-                        event.get('ts'),
-                        event.get('thread_ts')
-                    )
+                        event.get("type"),
+                        event.get("subtype"),
+                        event.get("channel"),
+                        event.get("user"),
+                        event.get("text"),
+                        event.get("ts"),
+                        event.get("thread_ts"),
+                    ),
                 )
 
         return None
@@ -100,7 +101,7 @@ class Command:
 
     @property
     def user_name(self) -> str:
-        return getUser(self.event.user_id)['name']
+        return getUser(self.event.user_id)["name"]
 
     @property
     def channel(self) -> str:
@@ -111,8 +112,10 @@ class Command:
         return self.event.thread
 
     def log(self):
-        print("{trigger} {args} {event}".format(
-            trigger=self.trigger, args=self.args, event=self.event)
+        print(
+            "{trigger} {args} {event}".format(
+                trigger=self.trigger, args=self.args, event=self.event
+            )
         )
 
 
@@ -125,11 +128,7 @@ def messageEvents(event):
 
 
 def allMessageEvents(event):
-    return (
-        event.type == 'message' and
-        event.subtype is None and
-        event.text is not None
-    )
+    return event.type == "message" and event.subtype is None and event.text is not None
 
 
 class _MaybeCallback(object):

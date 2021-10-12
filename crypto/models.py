@@ -53,12 +53,37 @@ class Listings:
 class ListingsDecoder(FastJsonDecoder):
     def jsonToClass(self):
         return {
-            ('timestamp', 'error_code', 'error_message',
-                'elapsed', 'credit_count'): Status,
-            ('id', 'name', 'symbol', 'slug', 'circulating_supply',
-             'total_supply', 'max_supply', 'date_added', 'num_market_pairs',
-             'tags', 'platform', 'cmc_rank', 'last_updated', 'quote'): Listing,
-            ('price', 'volume_24h', 'percent_change_1h', 'percent_change_24h',
-             'percent_change_7d', 'market_cap', 'last_updated'): Quote,
-            ('status', 'data'): Listings
+            (
+                "timestamp",
+                "error_code",
+                "error_message",
+                "elapsed",
+                "credit_count",
+            ): Status,
+            (
+                "id",
+                "name",
+                "symbol",
+                "slug",
+                "circulating_supply",
+                "total_supply",
+                "max_supply",
+                "date_added",
+                "num_market_pairs",
+                "tags",
+                "platform",
+                "cmc_rank",
+                "last_updated",
+                "quote",
+            ): Listing,
+            (
+                "price",
+                "volume_24h",
+                "percent_change_1h",
+                "percent_change_24h",
+                "percent_change_7d",
+                "market_cap",
+                "last_updated",
+            ): Quote,
+            ("status", "data"): Listings,
         }

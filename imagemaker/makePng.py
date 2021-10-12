@@ -1,7 +1,5 @@
 import codecs
-from jinja2 import (
-    Environment, PackageLoader, FileSystemLoader, select_autoescape
-)
+from jinja2 import Environment, PackageLoader, FileSystemLoader, select_autoescape
 import os
 import subprocess
 import tempfile
@@ -10,26 +8,25 @@ from pathlib import Path
 MODULE_DIR = Path(__file__).parent.resolve()
 
 WK_PATH = os.getenv(
-    'WKHTMLTOIMAGE_PATH',
-    str(MODULE_DIR / 'bin' / 'wkhtmltoimage-amd64')
+    "WKHTMLTOIMAGE_PATH", str(MODULE_DIR / "bin" / "wkhtmltoimage-amd64")
 )
 
-DFT_CACHE_DIR = Path(tempfile.gettempdir()) / 'wk_cache'
+DFT_CACHE_DIR = Path(tempfile.gettempdir()) / "wk_cache"
 
 env = Environment(
-    loader=FileSystemLoader(str(MODULE_DIR / 'templates')),
-    autoescape=select_autoescape(['html'])
+    loader=FileSystemLoader(str(MODULE_DIR / "templates")),
+    autoescape=select_autoescape(["html"]),
 )
 
 
 def getCryptoLeaderboardPng(rows):
-    template = env.get_template('cryptoLeaderboard.html')
+    template = env.get_template("cryptoLeaderboard.html")
     html = template.render(rows=rows)
     return generate_png(html)
 
 
 def getCryptoTopPng(rows):
-    template = env.get_template('cryptoTop.html')
+    template = env.get_template("cryptoTop.html")
     html = template.render(rows=rows)
     return generate_png(html)
 
@@ -46,7 +43,7 @@ def execute_wk(input):
         input=input,
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
 
@@ -55,5 +52,5 @@ def generate_png(html: str):
     png_content = p.stdout
     if p.returncode != 0:
         print(p.stderr)
-        raise RuntimeError('error running wkhtmltoimage, command')
+        raise RuntimeError("error running wkhtmltoimage, command")
     return png_content

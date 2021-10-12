@@ -3,14 +3,10 @@ from json import JSONDecoder
 
 class FastJsonDecoder(JSONDecoder):
     def __init__(self, *args, **kwargs):
-        JSONDecoder.__init__(
-            self, object_hook=self.hook, *args, **kwargs
-        )
+        JSONDecoder.__init__(self, object_hook=self.hook, *args, **kwargs)
 
     def jsonToClass(self):
-        raise NotImplementedError(
-            "jsonToClass() must be implemented on a subclass"
-        )
+        raise NotImplementedError("jsonToClass() must be implemented on a subclass")
 
     def hook(self, obj):
         for keys, C in self.jsonToClass().items():

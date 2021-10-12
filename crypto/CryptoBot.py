@@ -5,7 +5,7 @@ from .CryptoTrader import (
     Sell,
     User,
     InsufficientFundsError,
-    InsufficientCoinsError
+    InsufficientCoinsError,
 )
 from bot.Bot import Bot, Command, SlackBot
 from typing import Dict, List, Union, Optional
@@ -13,13 +13,7 @@ import threading
 
 
 class CryptoBot(SlackBot):
-
-    def __init__(
-        self,
-        token,
-        bot: Bot,
-        trader: CryptoTrader
-    ) -> None:
+    def __init__(self, token, bot: Bot, trader: CryptoTrader) -> None:
         super().__init__(token, bot, None)
         self.trader = trader
         self.lastLeaderboard: Union[str, None] = None
@@ -43,86 +37,103 @@ class CryptoBot(SlackBot):
             try:
                 i = ifs[idx]
                 if not i.meets_condition(prices):
-                    print('{} if id {} not met: {}'.format(
-                        user.user_name, i.id, i.condition.render()))
+                    print(
+                        "{} if id {} not met: {}".format(
+                            user.user_name, i.id, i.condition.render()
+                        )
+                    )
                 else:
-                    print('{} if id {} triggered! {}'.format(
-                        user.user_name, i.id, i.condition.render()))
-                    if i.action['type'] == 'alert':  # type: ignore
+                    print(
+                        "{} if id {} triggered! {}".format(
+                            user.user_name, i.id, i.condition.render()
+                        )
+                    )
+                    if i.action["type"] == "alert":  # type: ignore
                         self.api_call(
-                            'chat.postMessage',
-                            channel='@{}'.format(user.user_name),
-                            text='{}'.format(i.action['msg']),  # type: ignore
+                            "chat.postMessage",
+                            channel="@{}".format(user.user_name),
+                            text="{}".format(i.action["msg"]),  # type: ignore
                             username=self.bot.name,
-                            icon_emoji=self.bot.icon_emoji
+                            icon_emoji=self.bot.icon_emoji,
                         )
 
-                    elif i.action['type'] == 'buy':  # type: ignore
-                        coin = i.action['coin']  # type: ignore
+                    elif i.action["type"] == "buy":  # type: ignore
+                        coin = i.action["coin"]  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        buyQty = i.action['qty']
+                        buyQty = i.action["qty"]
                         toQty = fromQty + buyQty  # type: ignore
                         fromUSD = "{0:.1f}".format(user.balance)
-                        self.trader.buy(
-                            user.user_name, coin, buyQty)
+                        self.trader.buy(user.user_name, coin, buyQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
                         toUSD = "{0:.1f}".format(user.balance)
                         msg = "{}\n[triggered] {} USD {} -> {}, {} {} -> {}".format(
-                            i.render(), user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
+                            i.render(),
+                            user.user_name,
+                            fromUSD,
+                            toUSD,
+                            coin,
+                            fromQty,
+                            toQty,
+                        )
                         self.api_call(
-                            'chat.postMessage',
-                            channel='#crypto',
+                            "chat.postMessage",
+                            channel="#crypto",
                             text=_mono(msg),
                             username=self.bot.name,
-                            icon_emoji=self.bot.icon_emoji
+                            icon_emoji=self.bot.icon_emoji,
                         )
-                        self._onLeaderboard('#crypto', None)
-                    elif i.action['type'] == 'sell':  # type: ignore
-                        coin = i.action['coin']  # type: ignore
+                        self._onLeaderboard("#crypto", None)
+                    elif i.action["type"] == "sell":  # type: ignore
+                        coin = i.action["coin"]  # type: ignore
                         fromQty = user.portfolio.get(coin, 0)
-                        sellQty = i.action['qty']  # type: ignore
+                        sellQty = i.action["qty"]  # type: ignore
                         toQty = fromQty - sellQty
                         fromUSD = "{0:.1f}".format(user.balance)
-                        self.trader.sell(
-                            user.user_name, coin, sellQty
-                        )
+                        self.trader.sell(user.user_name, coin, sellQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
                         toUSD = "{0:.1f}".format(user.balance)
-                        msg = "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
-                            i.render(), user.user_name, fromUSD, toUSD, coin, fromQty, toQty)
+                        msg = (
+                            "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
+                                i.render(),
+                                user.user_name,
+                                fromUSD,
+                                toUSD,
+                                coin,
+                                fromQty,
+                                toQty,
+                            )
+                        )
                         self.api_call(
-                            'chat.postMessage',
-                            channel='#crypto',
+                            "chat.postMessage",
+                            channel="#crypto",
                             text=_mono(msg),
                             username=self.bot.name,
-                            icon_emoji=self.bot.icon_emoji
+                            icon_emoji=self.bot.icon_emoji,
                         )
-                        self._onLeaderboard('#crypto', None)
+                        self._onLeaderboard("#crypto", None)
                     # action succeeded, so remove it from ifs
-                    del(ifs[idx])
+                    del ifs[idx]
             except Exception as e:
                 i = ifs[idx]
                 self.api_call(
-                    'chat.postMessage',
-                    channel='@{}'.format(user.user_name),
-                    text='Execution of if failed. Condition: {}, Action: {}, Error: {}'.format(
-                        i.condition, i.action, str(e)),
+                    "chat.postMessage",
+                    channel="@{}".format(user.user_name),
+                    text="Execution of if failed. Condition: {}, Action: {}, Error: {}".format(
+                        i.condition, i.action, str(e)
+                    ),
                     username=self.bot.name,
-                    icon_emoji=self.bot.icon_emoji
+                    icon_emoji=self.bot.icon_emoji,
                 )
             idx = idx + 1
         self.trader._setUser(user)
 
     def deleteFileUploads(self, file):
         try:
-            result = self.api_call(
-                'files.delete',
-                file=file
-            )
+            result = self.api_call("files.delete", file=file)
             print(result)
             self.fileUploads = []
         except:
@@ -141,38 +152,26 @@ class CryptoBot(SlackBot):
                 "crypto if <condition> <action>",
                 "crypto price <ticker>",
                 "crypto play",
-                "crypto quit"
+                "crypto quit",
             ]
         )
-        self.postMessage(
-            channel,
-            _mono(msg),
-            thread
-        )
+        self.postMessage(channel, _mono(msg), thread)
 
     def onWhen(self, cmd: Command):
         # crypto when
         channel, thread = cmd.channel, cmd.thread
 
-        msg = 'no clue'
-        if cmd.args[0] == 'lambo':
-            msg = ':racing_car:'
-        elif cmd.args[0] == 'moon':
-            msg = ':full_moon_with_face:'
+        msg = "no clue"
+        if cmd.args[0] == "lambo":
+            msg = ":racing_car:"
+        elif cmd.args[0] == "moon":
+            msg = ":full_moon_with_face:"
 
-        self.postMessage(
-            channel,
-            msg,
-            thread
-        )
+        self.postMessage(channel, msg, thread)
 
     def onPing(self, cmd: Command):
         channel, thread = cmd.channel, cmd.thread
-        self.postMessage(
-            channel,
-            'pong!',
-            thread
-        )
+        self.postMessage(channel, "pong!", thread)
 
     def onNewUser(self, cmd: Command):
         # crypto play
@@ -180,7 +179,7 @@ class CryptoBot(SlackBot):
             cmd.user_name,
             cmd.args,
             cmd.channel,
-            cmd.thread
+            cmd.thread,
         )
         # create user here...
         self.trader.create_user(user_name)
@@ -192,7 +191,7 @@ class CryptoBot(SlackBot):
             cmd.user_name,
             cmd.args,
             cmd.channel,
-            cmd.thread
+            cmd.thread,
         )
         # delete user here...
         self.trader.delete_user(user_name)
@@ -201,18 +200,11 @@ class CryptoBot(SlackBot):
     def displayIfs(self, user_name: str, channel: str, thread: str) -> None:
         ifs = self.trader._getUser(user_name).ifs
         if len(ifs) == 0:
-            msg = 'No ifs for {}!'.format(user_name)
+            msg = "No ifs for {}!".format(user_name)
         else:
-            msg = '\n'.join([
-                i.render()
-                for i in ifs
-            ])
-            msg = 'Crypto ifs for {}\n{}'.format(user_name, msg)
-        self.postMessage(
-            channel,
-            _mono(msg),
-            thread
-        )
+            msg = "\n".join([i.render() for i in ifs])
+            msg = "Crypto ifs for {}\n{}".format(user_name, msg)
+        self.postMessage(channel, _mono(msg), thread)
 
     # crypto if btc > 100 alert
     # crypto if btc > 100 sell btc max
@@ -227,7 +219,7 @@ class CryptoBot(SlackBot):
             cmd.user_name,
             cmd.args,
             cmd.channel,
-            cmd.thread
+            cmd.thread,
         )
 
         print(args)
@@ -237,7 +229,7 @@ class CryptoBot(SlackBot):
             self.displayIfs(user_name, channel, thread)
 
         # crypto if delete <id>
-        elif args[0] == 'delete':
+        elif args[0] == "delete":
             try:
                 id = int(args[1])
                 self.trader.deleteIf(user_name, id)
@@ -247,7 +239,7 @@ class CryptoBot(SlackBot):
                 self.postMessage(
                     channel,
                     "`crypto delete <id>` is the format you're looking for.",
-                    thread
+                    thread,
                 )
 
         # crypto if btc > 100 alert
@@ -258,45 +250,34 @@ class CryptoBot(SlackBot):
                 comparator = args[1]
                 amount = float(args[2])
                 action = args[3]
-                if action == 'alert':
+                if action == "alert":
                     try:
-                        self.trader.setAlertIf(
-                            user_name, coin, comparator, amount)
+                        self.trader.setAlertIf(user_name, coin, comparator, amount)
                         self.displayIfs(user_name, channel, thread)
                     except Exception as e:
-                        self.postMessage(
-                            channel,
-                            _mono(str(e)),
-                            thread
-                        )
+                        self.postMessage(channel, _mono(str(e)), thread)
                         return
-                elif action == 'buy':
+                elif action == "buy":
                     try:
                         buyCoin = args[4]
                         buyQty = args[5]
                         self.trader.setBuyIf(
-                            user_name, coin, comparator, amount, buyCoin, buyQty)
+                            user_name, coin, comparator, amount, buyCoin, buyQty
+                        )
                         self.displayIfs(user_name, channel, thread)
                     except Exception as e:
-                        self.postMessage(
-                            channel,
-                            _mono(str(e)),
-                            thread
-                        )
+                        self.postMessage(channel, _mono(str(e)), thread)
                         return
-                elif action == 'sell':
+                elif action == "sell":
                     try:
                         sellCoin = args[4]
                         sellQty = args[5]
                         self.trader.setSellIf(
-                            user_name, coin, comparator, amount, sellCoin, sellQty)
+                            user_name, coin, comparator, amount, sellCoin, sellQty
+                        )
                         self.displayIfs(user_name, channel, thread)
                     except Exception as e:
-                        self.postMessage(
-                            channel,
-                            _mono(str(e)),
-                            thread
-                        )
+                        self.postMessage(channel, _mono(str(e)), thread)
                         return
             except Exception as e:
                 print(e)
@@ -309,14 +290,10 @@ class CryptoBot(SlackBot):
                         "crypto if btc < 50 buy btc max",
                         "crypto if btc < 50 buy btc 10",
                         "crypto if",
-                        "crypto if delete &lt;id&gt;"
+                        "crypto if delete &lt;id&gt;",
                     ]
                 )
-                self.postMessage(
-                    channel,
-                    _mono(msg),
-                    thread
-                )
+                self.postMessage(channel, _mono(msg), thread)
 
     def onBuy(self, cmd: Command):
         # crypto buy eth 200
@@ -324,7 +301,7 @@ class CryptoBot(SlackBot):
             cmd.user_name,
             cmd.args,
             cmd.channel,
-            cmd.thread
+            cmd.thread,
         )
         try:
             ticker = args[0].lower()
@@ -333,30 +310,23 @@ class CryptoBot(SlackBot):
             self.postMessage(
                 channel,
                 "`crypto buy <ticker> <quantity>` is the format you're looking for.",
-                thread
+                thread,
             )
             return
         try:
             self.trader.buy(user_name, ticker, quantity)
             self.postMessage(
                 channel,
-                "{u} bought {t} x {q}"
-                .format(u=user_name, t=ticker, q=quantity),
-                thread
+                "{u} bought {t} x {q}".format(u=user_name, t=ticker, q=quantity),
+                thread,
             )
             self.onLeaderboard(cmd)
         except InsufficientFundsError:
             self.postMessage(
-                channel,
-                "Insufficient funds. Try selling some coins for $!",
-                thread
+                channel, "Insufficient funds. Try selling some coins for $!", thread
             )
         except:
-            self.postMessage(
-                channel,
-                "Something went wrong.",
-                thread
-            )
+            self.postMessage(channel, "Something went wrong.", thread)
 
     def onSell(self, cmd: Command):
         # crypto sell eth 200
@@ -364,7 +334,7 @@ class CryptoBot(SlackBot):
             cmd.user_name,
             cmd.args,
             cmd.channel,
-            cmd.thread
+            cmd.thread,
         )
         try:
             ticker = args[0].lower()
@@ -373,58 +343,44 @@ class CryptoBot(SlackBot):
             self.postMessage(
                 channel,
                 "`crypto sell <ticker> <quantity>` is the format you're looking for.",
-                thread
+                thread,
             )
             return
         try:
             self.trader.sell(user_name, ticker, quantity)
             self.postMessage(
                 channel,
-                "{u} sold {t} x {q}"
-                .format(u=user_name, t=ticker, q=quantity),
-                thread
+                "{u} sold {t} x {q}".format(u=user_name, t=ticker, q=quantity),
+                thread,
             )
             self.onLeaderboard(cmd)
         except InsufficientCoinsError:
             self.postMessage(
                 channel,
-                "{u} does not have {t} x {q} to sell!"
-                .format(u=user_name, t=ticker, q=quantity),
-                thread
+                "{u} does not have {t} x {q} to sell!".format(
+                    u=user_name, t=ticker, q=quantity
+                ),
+                thread,
             )
         except:
-            self.postMessage(
-                channel,
-                "Something went wrong.",
-                thread
-            )
+            self.postMessage(channel, "Something went wrong.", thread)
 
     def _onLeaderboard(self, channel: str, thread: Optional[str]):
         png = self.trader.leaderboard()
         try:
             if self.lastLeaderboard:
-                self.api_call('files.delete', file=self.lastLeaderboard)
+                self.api_call("files.delete", file=self.lastLeaderboard)
                 self.lastLeaderboard = None
             response = self.api_call(
-                'files.upload',
-                channels=[channel],
-                filename='leaderboard.png',
-                file=png
+                "files.upload", channels=[channel], filename="leaderboard.png", file=png
             )
-            self.lastLeaderboard = response['file']['id']
+            self.lastLeaderboard = response["file"]["id"]
         except:
-            self.postMessage(
-                channel,
-                "Something went wrong.",
-                thread
-            )
+            self.postMessage(channel, "Something went wrong.", thread)
 
     def onLeaderboard(self, cmd: Command):
         # crypto leaderboard
-        channel, thread = (
-            cmd.channel,
-            cmd.thread
-        )
+        channel, thread = (cmd.channel, cmd.thread)
         self._onLeaderboard(channel, thread)
 
     def onPrices(self, cmd: Command):
@@ -449,20 +405,15 @@ class CryptoBot(SlackBot):
             png = self.trader.topCoins(numCoins)
 
             if self.lastTopCoins:
-                self.api_call('files.delete', file=self.lastTopCoins)
+                self.api_call("files.delete", file=self.lastTopCoins)
                 self.lastTopCoins = None
             response = self.api_call(
-                'files.upload',
-                channels=[channel],
-                filename='top coins.png',
-                file=png
+                "files.upload", channels=[channel], filename="top coins.png", file=png
             )
-            self.lastTopCoins = response['file']['id']
+            self.lastTopCoins = response["file"]["id"]
         except:
             self.postMessage
-            (
-                channel, 'crypto top <numCoins> ... try again', thread
-            )
+            (channel, "crypto top <numCoins> ... try again", thread)
 
 
 def _mono(str):

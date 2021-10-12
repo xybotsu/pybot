@@ -21,29 +21,11 @@ class Person:
     hobbies: List[Hobby]
 
 
-p = Person(
-    'Albert',
-    42,
-    [
-        Hobby(
-            'pingpong',
-            'slammo'
-        ),
-        Hobby(
-            'tennis',
-            'whammo'
-        )
-    ]
-)
+p = Person("Albert", 42, [Hobby("pingpong", "slammo"), Hobby("tennis", "whammo")])
 
-print(
-    p.to_json()
-)
+print(p.to_json())
 
 j = p.to_json()
 
 person = Person.from_json(j)
-[
-    h.pretty_desc()
-    for h in person.hobbies
-]
+[h.pretty_desc() for h in person.hobbies]

@@ -18,34 +18,34 @@ class Condition:
     price: float
 
     def render(self) -> str:
-        if self.comparator == '&gt;':
-            comp = '>'
-        elif self.comparator == '&lt;':
-            comp = '<'
-        return '{} {} {}'.format(self.coin, comp, self.price)
+        if self.comparator == "&gt;":
+            comp = ">"
+        elif self.comparator == "&lt;":
+            comp = "<"
+        return "{} {} {}".format(self.coin, comp, self.price)
 
 
 @dataclass_json
 @dataclass
 class Alert:
     msg: str
-    type: Literal['alert'] = 'alert'
+    type: Literal["alert"] = "alert"
 
 
 @dataclass_json
 @dataclass
 class Buy:
     coin: str
-    qty: Union[float, Literal['max']]
-    type: Literal['buy'] = 'buy'
+    qty: Union[float, Literal["max"]]
+    type: Literal["buy"] = "buy"
 
 
 @dataclass_json
 @dataclass
 class Sell:
     coin: str
-    qty: Union[float, Literal['max']]
-    type: Literal['sell'] = 'sell'
+    qty: Union[float, Literal["max"]]
+    type: Literal["sell"] = "sell"
 
 
 @dataclass_json
@@ -56,31 +56,32 @@ class If:
     action: Union[Alert, Buy, Sell]
 
     def meets_condition(self, prices: Dict[str, float]) -> bool:
-        if self.condition.comparator == '&gt;':
+        if self.condition.comparator == "&gt;":
             return prices[self.condition.coin] > self.condition.price
-        elif self.condition.comparator == '&lt;':
+        elif self.condition.comparator == "&lt;":
             return prices[self.condition.coin] < self.condition.price
         else:
             raise InvalidConditionError(
-                'We only support a > b or a < b conditions at this time.')
+                "We only support a > b or a < b conditions at this time."
+            )
 
     def render(self) -> str:
-        if self.action['type'] == 'alert':
-            return '[id {}] if {} {} {} alert'.format(
-                self.id,
-                self.condition.coin,
-                self.condition.comparator,
-                self.condition.price
-            )
-        else:
-            return '[id {}] if {} {} {} {} {} {}'.format(
+        if self.action["type"] == "alert":
+            return "[id {}] if {} {} {} alert".format(
                 self.id,
                 self.condition.coin,
                 self.condition.comparator,
                 self.condition.price,
-                self.action['type'],
-                self.action['coin'],
-                self.action['qty']
+            )
+        else:
+            return "[id {}] if {} {} {} {} {} {}".format(
+                self.id,
+                self.condition.coin,
+                self.condition.comparator,
+                self.condition.price,
+                self.action["type"],
+                self.action["coin"],
+                self.action["qty"],
             )
 
 
@@ -94,11 +95,7 @@ class User:
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with 0 value
-        return {
-            k: v
-            for k, v in self.portfolio.items()
-            if v != 0.0
-        }
+        return {k: v for k, v in self.portfolio.items() if v != 0.0}
 
     def value(self, prices: Dict[str, float]) -> float:
         sum = 0.0
@@ -127,24 +124,24 @@ class CryptoTrader:
         prices = self.api.getPrices()
         ticker = ticker.lower()
 
-        if (ticker not in prices):
+        if ticker not in prices:
             raise InvalidCoinError(
-                "Price missing for {ticker}. Try a different coin."
-                .format(ticker=ticker)
+                "Price missing for {ticker}. Try a different coin.".format(
+                    ticker=ticker
+                )
             )
 
         purchasePrice = prices[ticker] * quantity
-        if (user.balance > purchasePrice):
-            user.portfolio[ticker] = user.portfolio.get(
-                ticker
-            ) or 0  # initialize if needed
+        if user.balance > purchasePrice:
+            user.portfolio[ticker] = (
+                user.portfolio.get(ticker) or 0
+            )  # initialize if needed
             user.portfolio[ticker] += quantity
             user.balance = user.balance - purchasePrice
             self._setUser(user)
         else:
             raise InsufficientFundsError(
-                "{user_name} is out of dough!"
-                .format(user_name=user_name)
+                "{user_name} is out of dough!".format(user_name=user_name)
             )
 
     def sell(self, user_name: str, ticker: str, quantity: float) -> None:
@@ -152,18 +149,16 @@ class CryptoTrader:
         prices = self.api.getPrices()
         ticker = ticker.lower()
 
-        if (
-            user.portfolio.get(ticker) and
-            user.portfolio[ticker] >= quantity
-        ):
+        if user.portfolio.get(ticker) and user.portfolio[ticker] >= quantity:
             sellPrice = prices[ticker] * quantity
             user.portfolio[ticker] -= quantity
             user.balance += sellPrice
             self._setUser(user)
         else:
             raise InsufficientCoinsError(
-                "{user_name} don't have {coin} coins to sell!"
-                .format(user_name=user_name, coin=ticker)
+                "{user_name} don't have {coin} coins to sell!".format(
+                    user_name=user_name, coin=ticker
+                )
             )
 
     def deleteIf(self, user_name: str, id: int) -> None:
@@ -172,54 +167,43 @@ class CryptoTrader:
         self._setUser(user)
 
     def setAlertIf(
-        self,
-        user_name: str,
-        coin: str,
-        comparator: str,
-        amount: float
+        self, user_name: str, coin: str, comparator: str, amount: float
     ) -> None:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
 
-        if (coin not in prices):
+        if coin not in prices:
             raise InvalidCoinError(
-                "Price missing for {coin}. Try a different coin."
-                .format(coin=coin)
+                "Price missing for {coin}. Try a different coin.".format(coin=coin)
             )
 
-        if (coin not in prices):
+        if coin not in prices:
             raise InvalidCoinError(
-                "Price missing for {coin}. Try a different coin."
-                .format(coin=coin)
+                "Price missing for {coin}. Try a different coin.".format(coin=coin)
             )
 
         price = prices[coin]
 
         # coin > amount
-        if (comparator == '&gt;' and price > amount):
+        if comparator == "&gt;" and price > amount:
             raise InvalidAlertError(
-                "Invalid alert. Price of {} is already > {}".format(
-                    coin, amount)
+                "Invalid alert. Price of {} is already > {}".format(coin, amount)
             )
-        elif (comparator == '&lt;' and price < amount):
+        elif comparator == "&lt;" and price < amount:
             raise InvalidAlertError(
-                "Invalid alert. Price of {} is already < {}".format(
-                    coin, amount)
+                "Invalid alert. Price of {} is already < {}".format(coin, amount)
             )
         else:
             id = user.get_next_if_id()
             user.ifs.append(
                 If(
                     id,
-                    Condition(
-                        coin,
-                        comparator,
-                        amount
-                    ),
+                    Condition(coin, comparator, amount),
                     Alert(
                         msg="Alert! The price of {} is {} {}.".format(
-                            coin, comparator, amount)
-                    )
+                            coin, comparator, amount
+                        )
+                    ),
                 )
             )
             self._setUser(user)
@@ -231,13 +215,13 @@ class CryptoTrader:
         comparator: str,
         amount: float,
         buyCoin: str,
-        buyQty: str
+        buyQty: str,
     ) -> None:
         try:
             buyQuantity = float(buyQty)
         except:
-            if buyQty == 'max':
-                buyQuantity = 'max'
+            if buyQty == "max":
+                buyQuantity = "max"
             else:
                 raise InvalidBuyQuantityError(
                     "Either buy a numeric amount of coin, or specify 'max'"
@@ -246,45 +230,36 @@ class CryptoTrader:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
 
-        if (coin not in prices):
+        if coin not in prices:
             raise InvalidCoinError(
-                "Price missing for {coin}. Try a different coin."
-                .format(coin=coin)
+                "Price missing for {coin}. Try a different coin.".format(coin=coin)
             )
 
-        if (buyCoin not in prices):
+        if buyCoin not in prices:
             raise InvalidCoinError(
-                "Price missing for {buyCoin}. Try a different coin."
-                .format(buyCoin=buyCoin)
+                "Price missing for {buyCoin}. Try a different coin.".format(
+                    buyCoin=buyCoin
+                )
             )
 
         price = prices[coin]
 
         # coin > amount
-        if (comparator == '&gt;' and price > amount):
+        if comparator == "&gt;" and price > amount:
             raise InvalidAlertError(
-                "Invalid buy. Price of {} is already > {}".format(
-                    coin, amount)
+                "Invalid buy. Price of {} is already > {}".format(coin, amount)
             )
-        elif (comparator == '&lt;' and price < amount):
+        elif comparator == "&lt;" and price < amount:
             raise InvalidAlertError(
-                "Invalid buy. Price of {} is already < {}".format(
-                    coin, amount)
+                "Invalid buy. Price of {} is already < {}".format(coin, amount)
             )
         else:
             id = user.get_next_if_id()
             user.ifs.append(
                 If(
                     id,
-                    Condition(
-                        coin,
-                        comparator,
-                        amount
-                    ),
-                    Buy(
-                        coin=buyCoin,
-                        qty=buyQuantity  # either float or 'max'
-                    )
+                    Condition(coin, comparator, amount),
+                    Buy(coin=buyCoin, qty=buyQuantity),  # either float or 'max'
                 )
             )
             self._setUser(user)
@@ -296,13 +271,13 @@ class CryptoTrader:
         comparator: str,
         amount: float,
         sellCoin: str,
-        sellQty: str
+        sellQty: str,
     ) -> None:
         try:
             sellQuantity = float(sellQty)
         except:
-            if sellQty == 'max':
-                sellQuantity = 'max'
+            if sellQty == "max":
+                sellQuantity = "max"
             else:
                 raise InvalidSellQuantityError(
                     "Either sell a numeric amount of coin, or specify 'max'"
@@ -311,91 +286,62 @@ class CryptoTrader:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
 
-        if (coin not in prices):
+        if coin not in prices:
             raise InvalidCoinError(
-                "Price missing for {coin}. Try a different coin."
-                .format(coin=coin)
+                "Price missing for {coin}. Try a different coin.".format(coin=coin)
             )
 
-        if (sellCoin not in prices):
+        if sellCoin not in prices:
             raise InvalidCoinError(
-                "Price missing for {sellCoin}. Try a different coin."
-                .format(sellCoin=sellCoin)
+                "Price missing for {sellCoin}. Try a different coin.".format(
+                    sellCoin=sellCoin
+                )
             )
 
         price = prices[coin]
 
         # coin > amount
-        if (comparator == '&gt;' and price > amount):
+        if comparator == "&gt;" and price > amount:
             raise InvalidAlertError(
-                "Invalid sell. Price of {} is already > {}".format(
-                    coin, amount)
+                "Invalid sell. Price of {} is already > {}".format(coin, amount)
             )
-        elif (comparator == '&lt;' and price < amount):
+        elif comparator == "&lt;" and price < amount:
             raise InvalidAlertError(
-                "Invalid sell. Price of {} is already < {}".format(
-                    coin, amount)
+                "Invalid sell. Price of {} is already < {}".format(coin, amount)
             )
         else:
             id = user.get_next_if_id()
             user.ifs.append(
                 If(
                     id,
-                    Condition(
-                        coin,
-                        comparator,
-                        amount
-                    ),
-                    Sell(
-                        coin=sellCoin,
-                        qty=sellQuantity  # either float or 'max'
-                    )
+                    Condition(coin, comparator, amount),
+                    Sell(coin=sellCoin, qty=sellQuantity),  # either float or 'max'
                 )
             )
             self._setUser(user)
 
     def _key(self, user_name: str) -> str:
         return "cryptoTrader.{group}.json.{user_name}".format(
-            group=self.group,
-            user_name=user_name
+            group=self.group, user_name=user_name
         )
 
     def _getUser(self, user_name: str) -> User:
         if not self.db.get(self._key(user_name)):
-            self._setUser(
-                User(
-                    user_name,
-                    CryptoTrader.INITIAL_POT_SIZE,
-                    {}
-                )
-            )
-        return User.from_json(  # type: ignore
-            self.db.get(
-                self._key(user_name)
-            )
-        )
+            self._setUser(User(user_name, CryptoTrader.INITIAL_POT_SIZE, {}))
+        return User.from_json(self.db.get(self._key(user_name)))  # type: ignore
 
     def getAllUsers(self) -> List[User]:
         userKeys = self.db.keys("cryptoTrader.{g}.json.*".format(g=self.group))
         if not userKeys:
             return []
-        return [
-            User.from_json(u)  # type: ignore
-            for u in self.db.mget(userKeys)
-        ]
+        return [User.from_json(u) for u in self.db.mget(userKeys)]  # type: ignore
 
     def _setUser(self, user: User) -> None:
         self.db.set(self._key(user.user_name), user.to_json())  # type: ignore
 
     def create_user(self, user_name):
         if not self.db.get(self._key(user_name)):
-            self._setUser(
-                User(
-                    user_name,
-                    100000,
-                    {}
-                )
-            )
+            self._setUser(User(user_name, 100000, {}))
 
     def delete_user(self, user_name: str) -> None:
         if self.db.get(self._key(user_name)):
@@ -404,14 +350,14 @@ class CryptoTrader:
     def status(self, user_name: str) -> str:
         user = self._getUser(user_name)
         return (
-            "```User {user_name} has ${balance} to spend.\n" +
-            "Coins owned: {portfolio}\n" +
-            "Portfolio value is ${value}```"
+            "```User {user_name} has ${balance} to spend.\n"
+            + "Coins owned: {portfolio}\n"
+            + "Portfolio value is ${value}```"
         ).format(
             user_name=user.user_name,
             balance=user.balance,
             portfolio=user.display_portfolio(),
-            value=user.value(self.api.getPrices())
+            value=user.value(self.api.getPrices()),
         )
 
     def topCoins(self, n: int) -> str:
@@ -422,12 +368,12 @@ class CryptoTrader:
             rows.append(
                 (
                     listing.symbol,
-                    _format_money(listing.quote['USD'].price),
-                    _format_suffix(listing.quote['USD'].volume_24h),
-                    _format_suffix(listing.quote['USD'].market_cap),
-                    listing.quote['USD'].percent_change_1h,
-                    listing.quote['USD'].percent_change_24h,
-                    listing.quote['USD'].percent_change_7d
+                    _format_money(listing.quote["USD"].price),
+                    _format_suffix(listing.quote["USD"].volume_24h),
+                    _format_suffix(listing.quote["USD"].market_cap),
+                    listing.quote["USD"].percent_change_1h,
+                    listing.quote["USD"].percent_change_24h,
+                    listing.quote["USD"].percent_change_7d,
                 )
             )
 
@@ -437,15 +383,13 @@ class CryptoTrader:
         users = self.getAllUsers()
 
         if not users:
-            return 'No leaderboard created yet. `crypto help` to start.'
+            return "No leaderboard created yet. `crypto help` to start."
 
         prices = self.api.getPrices()
 
         # sort users by total $, descending
         sortedUsers = sorted(
-            users,
-            key=lambda u: u.balance + u.value(prices),
-            reverse=True
+            users, key=lambda u: u.balance + u.value(prices), reverse=True
         )
 
         rows = []
@@ -458,10 +402,9 @@ class CryptoTrader:
                     _format_money(user.balance),
                     _format_money(user.balance + user.value(prices)),
                     (
-                        (user.balance + user.value(prices)) -
-                        CryptoTrader.INITIAL_POT_SIZE
-
-                    )
+                        (user.balance + user.value(prices))
+                        - CryptoTrader.INITIAL_POT_SIZE
+                    ),
                 )
             )
 
@@ -514,4 +457,4 @@ def _format_suffix(num):
         magnitude += 1
         num /= 1000.0
     # add more suffixes if you need them
-    return '%.2f%s' % (num, ['', 'K', 'M', 'B', 'T', 'P'][magnitude])
+    return "%.2f%s" % (num, ["", "K", "M", "B", "T", "P"][magnitude])

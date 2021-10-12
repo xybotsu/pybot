@@ -1,5 +1,11 @@
 # Pybot
 
+### Development
+
+Use the python version specified in .python-version
+
+Use [black](https://black.readthedocs.io/en/stable/) to lint: `black .`
+
 ### Cryptobot
 
 ![get live pricing](https://i.imgur.com/KkoFvwR.png)
