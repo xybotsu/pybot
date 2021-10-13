@@ -64,13 +64,7 @@ class SlackBot(SlackClient):
     def _messageEventToCommand(self, event):
         for trigger in self._triggers.keys():
             if event["text"].lower().startswith(trigger.lower()):
-                cmdText = event["text"].strip()
-                argText = cmdText[len(cmdText) :].strip()
-                # crypto commands are downcased for convenience
-                if cmdText.startswith("crypto"):
-                    args = argText.lower().split()
-                else:
-                    args = argText.split()
+                args = event["text"][len(trigger) :].strip().lower().split()
                 return Command(
                     trigger,
                     args,
