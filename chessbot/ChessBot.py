@@ -148,9 +148,10 @@ class ChessBot(SlackBot):
             if board.black_user == "kasparov":
                 board.push(getMove(board))
         except ValueError as e:
-            return self.postMessage(
-                channel, "This move is illegal: {}".format(e), thread
+            msg = (
+                f"The move {move} is illegal: {e}\nLegal moves are: {board.legal_moves}"
             )
+            return self.postMessage(channel, msg, thread)
         board.save(last_move_time=time.time())
         self._render(cmd, board=board)
         if board.is_game_over():
