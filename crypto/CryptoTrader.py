@@ -478,11 +478,11 @@ class InvalidConditionError(Error):
 
 
 def _format_money(n: float) -> str:
-    return "{0:.1f}".format(round(n*100)/100)
+    return "{0:.2f}".format(round(n*100)/100)
 
 
 def _format_pct(n: float) -> str:
-    return "{0:.1f}".format(n)
+    return "{0:.2f}".format(n)
 
 
 def _format_suffix(num):
