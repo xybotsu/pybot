@@ -7,7 +7,7 @@ from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
-import json
+import json, re
 
 
 @dataclass_json
@@ -36,7 +36,7 @@ class Alert:
 @dataclass
 class Buy:
     coin: str
-    qty: Union[float, Literal["max"]]
+    qty: str
     type: Literal["buy"] = "buy"
 
 
@@ -44,7 +44,7 @@ class Buy:
 @dataclass
 class Sell:
     coin: str
-    qty: Union[float, Literal["max"]]
+    qty: str
     type: Literal["sell"] = "sell"
 
 
@@ -94,8 +94,8 @@ class User:
     ifs: List[If] = field(default_factory=list)
 
     def display_portfolio(self) -> Dict[str, float]:
-        # don't include entries with 0 value
-        return {k: v for k, v in self.portfolio.items() if v != 0.0}
+        # don't include entries with small value
+        return {k: round(v*1e6)/1e6 for k, v in self.portfolio.items() if v >= 1e-6}
 
     def value(self, prices: Dict[str, float]) -> float:
         sum = 0.0
@@ -119,10 +119,11 @@ class CryptoTrader:
         self.group = group
         self.api = CoinMarketCapApi()
 
-    def buy(self, user_name: str, ticker: str, quantity: float) -> None:
+    def buy(self, user_name: str, ticker: str, quantity: str) -> None:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
         ticker = ticker.lower()
+        qty = 0.0
 
         if ticker not in prices:
             raise InvalidCoinError(
@@ -131,12 +132,27 @@ class CryptoTrader:
                 )
             )
 
-        purchasePrice = prices[ticker] * quantity
-        if user.balance > purchasePrice:
+        if quantity == 'all' or quantity == 'max': quantity = '100%'
+        elif quantity == 'half': quantity = '50%'
+        
+        if re.match('^\d+\.?\d*%$',quantity):
+            qty = user.balance/prices[ticker] * max(0,min(100,float(quantity.strip('%'))/100))
+        else:
+            try:
+                qty = float(quantity)
+            except:
+                raise InvalidBuyQuantityError(
+                    "Either buy a numeric amount of coin, or specify 'max', 'all', 'half', or some percentage."
+                )
+        if qty <= 0:
+            raise InvalidBuyQuantityError("Buy quantity must be greater than zero.")
+
+        purchasePrice = prices[ticker] * qty
+        if user.balance >= purchasePrice:
             user.portfolio[ticker] = (
                 user.portfolio.get(ticker) or 0
             )  # initialize if needed
-            user.portfolio[ticker] += quantity
+            user.portfolio[ticker] += qty
             user.balance = user.balance - purchasePrice
             self._setUser(user)
         else:
@@ -144,14 +160,30 @@ class CryptoTrader:
                 "{user_name} is out of dough!".format(user_name=user_name)
             )
 
-    def sell(self, user_name: str, ticker: str, quantity: float) -> None:
+    def sell(self, user_name: str, ticker: str, quantity: str) -> None:
         user = self._getUser(user_name)
         prices = self.api.getPrices()
         ticker = ticker.lower()
+        qty = 0.0
 
-        if user.portfolio.get(ticker) and user.portfolio[ticker] >= quantity:
-            sellPrice = prices[ticker] * quantity
-            user.portfolio[ticker] -= quantity
+        if quantity == 'all' or quantity == 'max': quantity = '100%'
+        elif quantity == 'half': quantity = '50%'
+
+        if re.match('^\d+\.?\d*%$',quantity):
+            qty = user.portfolio[ticker] * max(0,min(100,float(quantity.strip('%'))/100))
+        else:
+            try:
+                qty = float(quantity)
+            except:
+                raise InvalidSellQuantityError(
+                    "Either sell a numeric amount of coin, or specify 'max', 'all', 'half', or some percentage."
+                )
+        if qty <= 0:
+            raise InvalidSellQuantityError("Sell quantity must be greater than zero.")
+
+        if user.portfolio.get(ticker) and user.portfolio[ticker] >= qty:
+            sellPrice = prices[ticker] * qty
+            user.portfolio[ticker] -= qty
             user.balance += sellPrice
             self._setUser(user)
         else:
@@ -217,16 +249,6 @@ class CryptoTrader:
         buyCoin: str,
         buyQty: str,
     ) -> None:
-        try:
-            buyQuantity = float(buyQty)
-        except:
-            if buyQty == "max":
-                buyQuantity = "max"
-            else:
-                raise InvalidBuyQuantityError(
-                    "Either buy a numeric amount of coin, or specify 'max'"
-                )
-
         user = self._getUser(user_name)
         prices = self.api.getPrices()
 
@@ -241,6 +263,17 @@ class CryptoTrader:
                     buyCoin=buyCoin
                 )
             )
+
+        if buyQty == 'all' or buyQty == 'max': buyQty = '100%'
+        elif buyQty == 'half': buyQty = '50%'
+        
+        if not re.match('^\d+\.?\d*%$',buyQty):
+            try:
+                if float(buyQty) <= 0: raise InvalidBuyQuantityError("Buy quantity must be greater than zero.")
+            except:
+                raise InvalidBuyQuantityError(
+                    "Either buy a numeric amount of coin, or specify 'max', 'all', 'half', or some percentage."
+                )
 
         price = prices[coin]
 
@@ -259,7 +292,7 @@ class CryptoTrader:
                 If(
                     id,
                     Condition(coin, comparator, amount),
-                    Buy(coin=buyCoin, qty=buyQuantity),  # either float or 'max'
+                    Buy(coin=buyCoin, qty=buyQty),  # either float or percentage
                 )
             )
             self._setUser(user)
@@ -273,16 +306,6 @@ class CryptoTrader:
         sellCoin: str,
         sellQty: str,
     ) -> None:
-        try:
-            sellQuantity = float(sellQty)
-        except:
-            if sellQty == "max":
-                sellQuantity = "max"
-            else:
-                raise InvalidSellQuantityError(
-                    "Either sell a numeric amount of coin, or specify 'max'"
-                )
-
         user = self._getUser(user_name)
         prices = self.api.getPrices()
 
@@ -297,6 +320,17 @@ class CryptoTrader:
                     sellCoin=sellCoin
                 )
             )
+
+        if sellQty == 'all' or sellQty == 'max': sellQty = '100%'
+        elif sellQty == 'half': sellQty = '50%'
+        
+        if not re.match('^\d+\.?\d*%$',sellQty):
+            try:
+                if float(sellQty) <= 0: raise InvalidSellQuantityError("Sell quantity must be greater than zero.")
+            except:
+                raise InvalidSellQuantityError(
+                    "Either sell a numeric amount of coin, or specify 'max', 'all', 'half', or some percentage."
+                )
 
         price = prices[coin]
 
@@ -315,7 +349,7 @@ class CryptoTrader:
                 If(
                     id,
                     Condition(coin, comparator, amount),
-                    Sell(coin=sellCoin, qty=sellQuantity),  # either float or 'max'
+                    Sell(coin=sellCoin, qty=sellQty),  # either float or some percentage
                 )
             )
             self._setUser(user)
@@ -444,7 +478,7 @@ class InvalidConditionError(Error):
 
 
 def _format_money(n: float) -> str:
-    return "{0:.1f}".format(n)
+    return "{0:.1f}".format(round(n*100)/100)
 
 
 def _format_pct(n: float) -> str:

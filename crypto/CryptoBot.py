@@ -166,6 +166,8 @@ class CryptoBot(SlackBot):
             msg = ":racing_car:"
         elif cmd.args[0] == "moon":
             msg = ":full_moon_with_face:"
+        elif cmd.args[0] == "hax":
+            msg = "YOUR BALANCE = $420.69"
 
         self.postMessage(channel, msg, thread)
 
@@ -304,8 +306,8 @@ class CryptoBot(SlackBot):
             cmd.thread,
         )
         try:
-            ticker = args[0].lower()
-            quantity = float(args[1])
+            ticker = args[0].lower().strip()
+            quantity = args[1].lower().strip()
         except:
             self.postMessage(
                 channel,
@@ -337,8 +339,8 @@ class CryptoBot(SlackBot):
             cmd.thread,
         )
         try:
-            ticker = args[0].lower()
-            quantity = float(args[1])
+            ticker = args[0].lower().strip()
+            quantity = args[1].lower().strip()
         except:
             self.postMessage(
                 channel,
