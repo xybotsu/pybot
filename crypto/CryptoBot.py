@@ -33,11 +33,11 @@ class CryptoBot(SlackBot):
             msg = ''
             for ticker,price in self.prices.items():
                 old_price = self.old_prices[ticker]
-                change = 100 - round(price/old_price * 1000)/10
-                if change >= 10:
-                    msg += f'{ticker} is UP {change}% in the last 30 min\n'
-                elif change <= -10:
-                    msg += f'{ticker} is DOWN {abs(change)}% in the last 30 min\n'
+                change = 1 - price/old_price
+                if change >= .1:
+                    msg += "{} is UP {:.1%} in the last 30 min\n".format(ticker,change)
+                elif change <= -.1:
+                    msg += "{} is DOWN {:.1%} in the last 30 min\n".format(ticker,abs(change))
             msg = msg.strip()
             if msg != '':
                 self.api_call(

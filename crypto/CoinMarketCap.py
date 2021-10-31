@@ -62,7 +62,7 @@ class CoinMarketCapApi:
             {
                 "X-CMC_PRO_API_KEY": CMC_API_KEY,
             },
-            {"limit": "200", "cryptocurrency_type": "coins"},
+            {"limit": "200", "cryptocurrency_type": "all", "sort": "market_cap", "sort_dir": "desc"},
         )
         return loads(resp.text, cls=ListingsDecoder)
 
