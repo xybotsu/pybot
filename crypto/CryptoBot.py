@@ -15,6 +15,7 @@ import threading
 class CryptoBot(SlackBot):
     def __init__(self, token, bot: Bot, trader: CryptoTrader) -> None:
         super().__init__(token, bot, None)
+        self.prices: Dict[str, float] = {}
         self.trader = trader
         self.lastLeaderboard: Union[str, None] = None
         self.lastTopCoins: Union[str, None] = None
@@ -26,9 +27,28 @@ class CryptoBot(SlackBot):
         threading.Timer(60 * 30, self.poll_and_execute_ifs).start()
 
         # get all users
-        prices = self.trader.api.getPrices()
+        self.old_prices = self.prices
+        self.prices = self.trader.api.getPrices()
+        if self.old_prices:
+            msg = ''
+            for ticker,price in self.prices.items():
+                old_price = self.old_prices[ticker]
+                change = 100 - round(price/old_price * 1000)/10
+                if change >= 10:
+                    msg += f'{ticker} is UP {change}% in the last 30 min\n'
+                elif change <= -10:
+                    msg += f'{ticker} is DOWN {abs(change)}% in the last 30 min\n'
+            msg = msg.strip()
+            if msg != '':
+                self.api_call(
+                    "chat.postMessage",
+                    channel="#crypto",
+                    text=_mono(msg),
+                    username=self.bot.name,
+                    icon_emoji=self.bot.icon_emoji,
+                )
         for user in self.trader.getAllUsers():
-            self.execute_ifs(user, prices)
+            self.execute_ifs(user, self.prices)
 
     def execute_ifs(self, user: User, prices: Dict[str, float]) -> None:
         idx = 0
