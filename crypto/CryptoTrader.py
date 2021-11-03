@@ -7,7 +7,7 @@ from collections import defaultdict
 from redis import StrictRedis
 from prettytable import PrettyTable
 from imagemaker.makePng import getCryptoLeaderboardPng, getCryptoTopPng
-import json, re
+import json, re, math
 
 
 @dataclass_json
@@ -95,7 +95,7 @@ class User:
 
     def display_portfolio(self) -> Dict[str, float]:
         # don't include entries with small value
-        return {k: round(v*1e6)/1e6 for k, v in self.portfolio.items() if v >= 1e-6}
+        return {k: round(v,max(0,min(6,6-math.floor(math.log(v,10))))) for k, v in self.portfolio.items() if v >= 1e-6}
 
     def value(self, prices: Dict[str, float]) -> float:
         sum = 0.0
@@ -478,7 +478,7 @@ class InvalidConditionError(Error):
 
 
 def _format_money(n: float) -> str:
-    return "{0:.2f}".format(round(n*100)/100)
+    return "{0:.2f}".format(round(n,2))
 
 
 def _format_pct(n: float) -> str:

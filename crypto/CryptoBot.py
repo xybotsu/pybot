@@ -79,15 +79,15 @@ class CryptoBot(SlackBot):
 
                     elif i.action["type"] == "buy":  # type: ignore
                         coin = i.action["coin"]  # type: ignore
-                        fromQty = "{0:.6f}".format(user.portfolio[coin] or 0)
+                        fromQty = "{0:.6g}".format(user.portfolio[coin] or 0)
                         buyQty = i.action["qty"]
-                        fromUSD = "{0:.1f}".format(user.balance)
+                        fromUSD = "{0:.2f}".format(user.balance)
                         self.trader.buy(user.user_name, coin, buyQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
-                        toQty = "{0:.6f}".format(user.portfolio[coin] or 0)
-                        toUSD = "{0:.1f}".format(user.balance)
+                        toQty = "{0:.6g}".format(user.portfolio[coin] or 0)
+                        toUSD = "{0:.2f}".format(user.balance)
                         msg = "{}\n[triggered] {} USD {} -> {}, {} {} -> {}".format(
                             i.render(),
                             user.user_name,
@@ -107,15 +107,15 @@ class CryptoBot(SlackBot):
                         self._onLeaderboard("#crypto", None)
                     elif i.action["type"] == "sell":  # type: ignore
                         coin = i.action["coin"]  # type: ignore
-                        fromQty = "{0:.6f}".format(user.portfolio[coin] or 0)
+                        fromQty = "{0:.6g}".format(user.portfolio[coin] or 0)
                         sellQty = i.action["qty"]  # type: ignore
-                        fromUSD = "{0:.1f}".format(user.balance)
+                        fromUSD = "{0:.2f}".format(user.balance)
                         self.trader.sell(user.user_name, coin, sellQty)
                         db_user = self.trader._getUser(user.user_name)
                         user.portfolio = db_user.portfolio
                         user.balance = db_user.balance
-                        toQty = "{0:.6f}".format(user.portfolio[coin] or 0)
-                        toUSD = "{0:.1f}".format(user.balance)
+                        toQty = "{0:.6g}".format(user.portfolio[coin] or 0)
+                        toUSD = "{0:.2f}".format(user.balance)
                         msg = (
                             "{}\n[trade executed] {} USD {} -> {}, {} {} -> {}".format(
                                 i.render(),
