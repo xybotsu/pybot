@@ -394,7 +394,12 @@ class CryptoBot(SlackBot):
                 self.api_call("files.delete", file=self.lastLeaderboard)
                 self.lastLeaderboard = None
             response = self.api_call(
-                "files.upload", channels=[channel], filename="leaderboard.png", file=png
+                "files.upload",
+                channels=[channel],
+                username=self.bot.name,
+                icon_emoji=self.bot.icon_emoji,
+                filename="leaderboard.png",
+                file=png
             )
             self.lastLeaderboard = response["file"]["id"]
         except:
