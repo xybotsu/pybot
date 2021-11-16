@@ -42,7 +42,7 @@ class CryptoBot(SlackBot):
             if msg != '':
                 self.api_call(
                     "chat.postMessage",
-                    channel="#crypto",
+                    channel="#crypto-notifications",
                     text=_mono(msg),
                     username=self.bot.name,
                     icon_emoji=self.bot.icon_emoji,
