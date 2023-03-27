@@ -1,6 +1,6 @@
 python-chess==0.23.9
 slackclient==1.2.1
-redis==2.10.6
+redis==4.5.3
 prettytable==0.7.2
 requests==2.20.0
 mypy==0.761
