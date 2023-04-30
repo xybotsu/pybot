@@ -63,3 +63,5 @@ target/
 .vscode/*
 
 .DS_Store
+
+.idea/

@@ -16,5 +16,6 @@
         "SLACK_TOKEN": {
             "description": "The API token for your new bot. You can get this from the Custom Integrations section on Slack's website."
         }
-    }
+    },
+    "stack": "heroku-22"
 }
